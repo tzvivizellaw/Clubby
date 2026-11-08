@@ -143,6 +143,13 @@ export default function Wallet() {
         <Text style={{ fontSize: 26, fontFamily: 'PlusJakartaSans_700Bold', color: '#2d3748' }}>{t('wallet.title')}</Text>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <TouchableOpacity
+            onPress={() => router.push('/game' as never)}
+            accessibilityLabel="Goal Rush"
+            style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Text style={{ fontSize: 16 }}>⚽</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={() => router.push('/notifications' as never)}
             style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' }}
           >
