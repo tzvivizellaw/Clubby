@@ -110,6 +110,8 @@ kbd{font-family:var(--body);font-weight:700;background:var(--paper2);border-radi
 .topts button:hover{background:#e6d9b8}
 .topts button:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
 .topts button kbd{margin-left:6px;font-size:12px}
+#landbtn{right:calc(122px + env(safe-area-inset-right,0px));bottom:calc(150px + env(safe-area-inset-bottom,0px));width:76px;height:76px;background:#3ddc84;font-size:16px;box-shadow:0 4px 0 #1b8a4e}
+#jumpbtn{right:calc(26px + env(safe-area-inset-right,0px));bottom:calc(190px + env(safe-area-inset-bottom,0px));width:76px;height:76px;background:#ff5d73;font-size:16px;color:#fff;box-shadow:0 4px 0 #b02a3e}
 #talkbtn{right:calc(26px + env(safe-area-inset-right,0px));bottom:calc(184px + env(safe-area-inset-bottom,0px));width:72px;height:72px;background:#c77dff;font-size:17px;box-shadow:0 4px 0 #7b2cbf}
 #nos{right:calc(122px + env(safe-area-inset-right,0px));bottom:calc(140px + env(safe-area-inset-bottom,0px));width:64px;height:64px;background:#4cc9f0;font-size:14px;box-shadow:0 4px 0 #1d7fa0}
 .btn:disabled{opacity:.45;cursor:not-allowed}
@@ -163,6 +165,10 @@ kbd{font-family:var(--body);font-weight:700;background:var(--paper2);border-radi
   <button id="talkbtn" class="tbtn" type="button" hidden>דבר</button>
 </div>
 <div id="panel" class="modal" hidden><div class="card" id="pcard"></div></div>
+<div class="touch" id="flybtns">
+  <button id="landbtn" class="tbtn" type="button" hidden>נחיתה</button>
+  <button id="jumpbtn" class="tbtn" type="button" hidden>צניחה</button>
+</div>
 <div id="talk" hidden><div class="tcard">
   <div class="thead"><span class="tav" id="tav"><u id="tavh"></u><i id="tavf"></i></span><b id="tname"></b><small id="tplace"></small></div>
   <p id="ttext" aria-live="polite"></p>
@@ -203,7 +209,7 @@ kbd{font-family:var(--body);font-weight:700;background:var(--paper2);border-radi
       <li>יש לכם מכונית משלכם, ואפשר לקנות עוד בסוכנות. נהיגה ברכב שלכם היא חוקית.</li>
       <li>המשטרה רודפת רק אחרי פשע: לקיחת רכב של מישהו אחר או פגיעה בניידת.</li>
       <li>נקודות צהובות הן משימות, אדומות הן מירוצים, סגולות הן חנויות שנכנסים אליהן.</li>
-      <li>בשדה התעופה שבדרום העיר יש מטוסים. טסים מזרחה לקפריסין ולאמריקה!</li>
+      <li>בשדה התעופה שבדרום העיר יש מטוסים. טסים מזרחה לקפריסין ולאמריקה! בטיסה: <kbd>L</kbd> נחיתה אוטומטית, <kbd>J</kbd> צניחה חופשית</li>
       <li>במוסך קונים ניטרו, ונוהגים איתו במקש <kbd>N</kbd>. צופר במקש <kbd>H</kbd>, קול ומוזיקה במקש <kbd>V</kbd>.</li>
     </ul>
     <div class="btns">
@@ -663,7 +669,7 @@ function resetWorld(){
 /* ================= input ================= */
 const keys=new Set();
 const KEYMAP={arrowup:'ArrowUp',arrowdown:'ArrowDown',arrowleft:'ArrowLeft',arrowright:'ArrowRight',up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight',' ':'Space',spacebar:'Space',enter:'Enter',escape:'Escape',esc:'Escape',shift:'ShiftLeft',
-  w:'KeyW',a:'KeyA',s:'KeyS',d:'KeyD',e:'KeyE',m:'KeyM',x:'KeyX',n:'KeyN',t:'KeyT','א':'KeyT',"'":'KeyW','ש':'KeyA','ד':'KeyS','ג':'KeyD','ק':'KeyE','צ':'KeyM','ס':'KeyX','מ':'KeyN'};
+  w:'KeyW',a:'KeyA',s:'KeyS',d:'KeyD',e:'KeyE',m:'KeyM',x:'KeyX',n:'KeyN',t:'KeyT','א':'KeyT',l:'KeyL','ך':'KeyL',j:'KeyJ','ח':'KeyJ',"'":'KeyW','ש':'KeyA','ד':'KeyS','ג':'KeyD','ק':'KeyE','צ':'KeyM','ס':'KeyX','מ':'KeyN'};
 function codeOf(e){const k=(e.key||'').toLowerCase();return KEYMAP[k]||e.code||'';}
 function gameActive(){return started&&$('panel').hidden&&!mapOpen&&!storeOpen&&!talk;}
 function onKeyDown(e){
@@ -680,6 +686,8 @@ function onKeyDown(e){
   if(e.code==='KeyM'){toggleMap();return;}
   if(e.code==='KeyV'){cycleSound();return;}
   if(e.code==='KeyT'&&gameActive()){startTalk();return;}
+  if(e.code==='KeyL'&&gameActive()){landBtn();return;}
+  if(e.code==='KeyJ'&&gameActive()){jumpBtn();return;}
   if(!$('panel').hidden||mapOpen||storeOpen)return;
   if(e.code==='KeyE'||e.code==='Enter')action();
   if(e.code==='KeyX')cancelActivity();
@@ -704,7 +712,7 @@ stick.addEventListener('pointerup',joyEnd);stick.addEventListener('pointercancel
 $('act').addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;e.preventDefault();if(!paused)action();});
 $('hb').addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;e.preventDefault();joy.hb=true;});
 /* touch: floating joystick anywhere on the left half, buttons by touchstart */
-const TBTN={talkbtn:()=>{startTalk();},act:()=>{if(!paused)action();},hb:()=>{joy.hb=true;},nos:()=>{joy.nitro=true;}};
+const TBTN={landbtn:()=>landBtn(),jumpbtn:()=>jumpBtn(),talkbtn:()=>{startTalk();},act:()=>{if(!paused)action();},hb:()=>{joy.hb=true;},nos:()=>{joy.nitro=true;}};
 const TEND={hb:()=>{joy.hb=false;},nos:()=>{joy.nitro=false;}};
 const btnTouch={};
 let stickHome=null;
@@ -737,6 +745,7 @@ $('nos').addEventListener('pointerup',()=>joy.nitro=false);$('nos').addEventList
 $('mapbtn').addEventListener('click',()=>{if(started)toggleMap();});
 $('mapclose').addEventListener('click',()=>toggleMap(false));
 $('objx').addEventListener('click',cancelActivity);
+for(const[id,fn]of[['landbtn',()=>landBtn()],['jumpbtn',()=>jumpBtn()]])$(id).addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;e.preventDefault();if(gameActive())fn();});
 function soundLabel(){$('sndbtn').textContent=['קול: הכול','קול: בלי מוזיקה','קול: כבוי'][save.sound||0]+(touchy?'':' (V)');}
 function cycleSound(){save.sound=((save.sound||0)+1)%3;SND.resume();SND.applyVol();soundLabel();persist();SND.click();}
 $('sndbtn').addEventListener('click',()=>{cycleSound();$('sndbtn').blur();});
@@ -782,6 +791,7 @@ function crime(name,n=1){
 function action(){
   if(bustLock>0||paused)return;
   if(race&&race.count>0)return;
+  if(player.mode==='sky'){openChute();return;}
   if(player.mode==='foot'){
     const v=nearestVehicle();if(!v)return;
     if(v.kind==='car'){
@@ -871,7 +881,8 @@ function drivePlayerCar(c,inp,dt){
 }
 function flyPlane(p,inp,dt){
   const T=PT[p.type];let thr=0,steer=0;
-  if(inp.joy){const m=Math.min(1,hyp(inp.x,inp.y)),df=angDiff(p.a,Math.atan2(inp.y,inp.x));thr=Math.abs(df)>2.3&&p.alt===0&&p.spd<1?0:m;steer=clamp(df*2,-1,1);}
+  if(p.auto){const o=autoPilot(p);thr=o.thr;steer=o.steer;}
+  else if(inp.joy){const m=Math.min(1,hyp(inp.x,inp.y)),df=angDiff(p.a,Math.atan2(inp.y,inp.x));if(Math.abs(df)>2.2){thr=p.alt===0&&p.spd<1?0:-m;steer=0;}else{thr=m;steer=clamp(df*2,-1,1);}}
   else{thr=-inp.y;steer=inp.x;}
   const over=overRunway(p.x,p.y);
   if(thr>0)p.spd+=T.acc*thr*dt;else if(thr<0)p.spd-=(p.alt>0?.07:.22)*-thr*dt;else p.spd-=(p.alt>0?.004:.05)*dt;
@@ -1513,6 +1524,7 @@ const SND=(()=>{
     else{set(loops.engine,0);set(loops.engine2,0);}
     if(active&&player.mode==='boat'){const sp=v.spd||0;loops.boat.o.frequency.setTargetAtTime(38+sp*9,t,.08);set(loops.boat,.12+Math.min(.08,sp*.015));set(loops.wake,Math.min(.12,sp*.02));}
     else if(active&&player.mode==='plane'){set(loops.boat,0);set(loops.wake,.03+v.alt*.12);}
+    else if(active&&player.mode==='sky'){set(loops.boat,0);set(loops.wake,player.chute?.05:.2);}
     else{set(loops.boat,0);set(loops.wake,0);}
     let pd=1e9;if(active)for(const c of cars)if(c.chase&&!c.leaving){const d=hyp(c.x-player.x,c.y-player.y);if(d<pd)pd=d;}
     if(pd<1300){loops.siren.o.frequency.setTargetAtTime(680+260*Math.sin(performance.now()/260),t,.02);set(loops.siren,.06*(1-pd/1300));}else set(loops.siren,0);
@@ -1651,6 +1663,93 @@ function askRide(){
   }],['לא עכשיו',()=>reply('אין בעיה, אולי בפעם אחרת.')]]);
 }
 
+
+/* ================= autopilot landing & skydiving ================= */
+function nearestAirport(x,y){let b=null,bd=1e18;for(const a of AIRPORTS){const d=hyp(a.run.x+a.run.w/2-x,a.run.y-y);if(d<bd){bd=d;b=a;}}return b;}
+function autoLandStart(p,silent){
+  if(p.alt<=0){if(!silent)toast('המטוס כבר על הקרקע',null,1200);return;}
+  const ap=nearestAirport(p.x,p.y),r=ap.run,fromWest=p.x<r.x+r.w/2;
+  p.auto={ap,dir:fromWest?0:1,phase:'approach',ax:fromWest?r.x-1100:r.x+r.w+1100};
+  if(!silent){toast('טייס אוטומטי','נוחתים ב'+ap.name,1900);SND.ding();}
+}
+function autoPilot(p){
+  const A=p.auto,r=A.ap.run,cy=r.y+r.h/2,T=PT[p.type];
+  let tx,ty,want;
+  if(A.phase==='approach'){tx=A.ax;ty=cy;want=T.fly+3;if(hyp(p.x-tx,p.y-ty)<280)A.phase='final';}
+  else{
+    tx=p.x+(A.dir===0?520:-520);tx=clamp(tx,r.x-1200,r.x+r.w+1200);ty=cy;
+    if(A.phase==='final'&&p.alt===0)A.phase='roll';
+    const overR=inRect(p.x,p.y,r,0);
+    want=A.phase==='roll'?0:(overR?0:T.fly+1);
+    if(A.phase==='final'&&p.alt>0&&((A.dir===0&&p.x>r.x+r.w-100)||(A.dir===1&&p.x<r.x+100)))A.phase='approach';
+  }
+  const df=angDiff(p.a,Math.atan2(ty-p.y,tx-p.x));
+  const thr=p.spd<want-.3?1:p.spd>want+.3?-1:0;
+  if(A.phase==='roll'&&Math.abs(p.spd)<.15){p.auto=null;p.spd=0;if(p===player.veh){toast('נחתתם!',touchy?'לחצו "צא" כדי לצאת מהמטוס':'לחצו E כדי לצאת מהמטוס',2200);SND.win();}}
+  return{thr,steer:clamp(df*2.5,-1,1)};
+}
+function landBtn(){
+  const p=player.veh;
+  if(player.mode!=='plane'||!p)return;
+  if(p.auto){p.auto=null;toast('הטייס האוטומטי כבוי',null,1200);return;}
+  autoLandStart(p,false);
+}
+function jumpBtn(){
+  if(player.mode==='sky'){openChute();return;}
+  const p=player.veh;
+  if(player.mode!=='plane'||!p)return;
+  if(p.alt<.3){toast('צריך להיות גבוה יותר כדי לצנוח',null,1400);return;}
+  if(race&&!race.done)endRace(false,'קפצתם מהמטוס, המרוץ בוטל');
+  autoLandStart(p,true);
+  player.mode='sky';player.veh=null;player.alt=p.alt;player.chute=false;player.vx=p.vx*.5;player.vy=p.vy*.5;player.x=p.x;player.y=p.y;player.a=p.a;
+  SND.whoosh();toast('צניחה חופשית!',touchy?'לחצו "מצנח" כדי לפתוח':'לחצו J כדי לפתוח את המצנח',2000);
+}
+function openChute(){
+  if(player.mode!=='sky'||player.chute)return;
+  player.chute=true;SND.door();SND.whoosh();toast('המצנח נפתח!','כוונו עם החצים לנחיתה רכה',1500);
+}
+function updateSky(inp,dt){
+  const sp=player.chute?2.6:4.8;
+  player.vx+=(inp.x*sp-player.vx)*.045*dt;player.vy+=(inp.y*sp-player.vy)*.045*dt;
+  const nx=player.x+player.vx*dt,ny=player.y+player.vy*dt;
+  if(!out(nx,ny,60)){player.x=nx;player.y=ny;}
+  if(Math.abs(player.vx)+Math.abs(player.vy)>.3)player.a=Math.atan2(player.vy,player.vx);
+  player.alt-=(player.chute?.0011:.0026)*dt;
+  if(!player.chute&&player.alt<.3)openChute();
+  if(player.alt<=0){
+    player.alt=0;player.chute=false;
+    const wet=!isLand(player.x,player.y);
+    if(blockedFoot(player.x,player.y)){
+      let found=null;
+      for(let r=20;r<6000&&!found;r+=r<400?20:120)for(let k=0;k<24;k++){const a=k/24*TAU,x=player.x+Math.cos(a)*r,y=player.y+Math.sin(a)*r;if(!blockedFoot(x,y)){found={x,y};break;}}
+      if(found){player.x=found.x;player.y=found.y;}else{player.x=START.x;player.y=START.y;}
+    }
+    player.mode='foot';player.vx=player.vy=0;
+    burst(player.x,player.y,16);
+    toast(wet?'נחתתם במים ושחיתם לחוף':'נחיתה מושלמת!',null,1800);SND.ding();
+  }
+}
+function drawSkydiver(){
+  const a=player.alt,s=1+a*.7,x=player.x,y=player.y;
+  ctx.fillStyle=`rgba(0,0,0,${.25-a*.12})`;ctx.beginPath();ctx.ellipse(x+a*90,y+a*70,(player.chute?34:14)*(1-a*.2),(player.chute?16:9)*(1-a*.2),player.a,0,TAU);ctx.fill();
+  ctx.save();ctx.translate(x,y);ctx.rotate(player.a);ctx.scale(s,s);
+  ctx.strokeStyle='#16202c';ctx.lineWidth=2.4;ctx.lineCap='round';
+  const sw=player.chute?0:Math.sin(time*.3)*2;
+  ctx.beginPath();ctx.moveTo(-2,-5);ctx.lineTo(-12,-14+sw);ctx.moveTo(-2,5);ctx.lineTo(-12,14-sw);ctx.moveTo(4,-5);ctx.lineTo(12,-15-sw);ctx.moveTo(4,5);ctx.lineTo(12,15+sw);ctx.stroke();
+  ctx.lineCap='butt';
+  ctx.fillStyle=player.shirt;ctx.beginPath();ctx.ellipse(0,0,10,6.5,0,0,TAU);ctx.fill();
+  ctx.fillStyle=player.skin;ctx.beginPath();ctx.arc(11,0,5,0,TAU);ctx.fill();
+  ctx.fillStyle=player.hat||player.hair;ctx.beginPath();ctx.arc(11,0,5.2,Math.PI*.5,Math.PI*1.5);ctx.fill();
+  ctx.fillStyle='#2b3a55';ctx.fillRect(-7,-4,6,8);
+  if(player.chute){
+    ctx.strokeStyle='rgba(30,30,30,.6)';ctx.lineWidth=1;ctx.beginPath();for(const yy of[-30,-10,10,30]){ctx.moveTo(0,0);ctx.lineTo(-4,yy);}ctx.stroke();
+    const cols=['#ff5d73','#fff','#ffc53d','#fff','#4cc9f0','#fff','#ff5d73'];
+    for(let k=0;k<7;k++){ctx.fillStyle=cols[k];rr(-12,-35+k*10,18,10,k===0?[6,6,0,0]:k===6?[0,0,6,6]:0);ctx.fill();}
+    ctx.strokeStyle='rgba(0,0,0,.3)';ctx.lineWidth=1.5;rr(-12,-35,18,70,6);ctx.stroke();
+  }
+  ctx.restore();
+}
+
 /* ================= update ================= */
 function update(dt){
   dayT=(dayT+dt/(60*480))%1;
@@ -1667,6 +1766,7 @@ function update(dt){
     if((K('KeyN')||joy.nitro)&&save.items.nitro&&player.veh.owned&&nitroCharge>=1&&!locked){nitroT=110;nitroCharge=0;SND.whoosh();}
     drivePlayerCar(player.veh,inp,dt);player.x=player.veh.x;player.y=player.veh.y;}
   else if(player.mode==='plane'){flyPlane(player.veh,inp,dt);player.x=player.veh.x;player.y=player.veh.y;}
+  else if(player.mode==='sky'){updateSky(inp,dt);}
   else{drivePlayerBoat(player.veh,inp,dt);player.x=player.veh.x;player.y=player.veh.y;}
 
   for(const c of cars){if(c===player.veh||c.racer)continue;if(c.chase||c.leaving)updatePolice(c,dt);else if(c.ai)updateAICar(c,dt);else{c.spd*=Math.pow(.9,dt);c.brake=false;}}
@@ -1696,17 +1796,18 @@ function update(dt){
     bustT=caught?bustT+dt:Math.max(0,bustT-dt);
     if(bustT>70){bustT=0;bustLock=150;SND.busted();const fine=Math.round(save.money*.1);addMoney(-fine);persist();toast('נתפסתם!',fine?'קנס של '+fine+' ₪':'',2300);if(mission)failMission('נתפסתם, המשימה נכשלה');}
   }
+  for(const pl of planes)if(pl.auto&&pl!==player.veh)flyPlane(pl,{x:0,y:0,joy:false,hb:false},dt);
   updateMission(dt);updateRace(dt);
   if(waypoint&&hyp(waypoint.x-player.x,waypoint.y-player.y)<90){toast('הגעתם: '+waypoint.label,null,1400);SND.ding();waypoint=null;}
 
-  if(!race&&!(player.mode==='plane'&&player.veh.alt>0)){for(const m of MARKERS){const d=hyp(m.x-player.x,m.y-player.y);if(d>95)m.armed=true;else if(d<48&&m.armed&&!mission&&bustLock<=0){m.armed=false;if(player.veh&&player.veh.kind==='car'){player.veh.vx=player.veh.vy=player.veh.spd=0;}openMarker(m);break;}}}
+  if(!race&&player.mode!=='sky'&&!(player.mode==='plane'&&player.veh.alt>0)){for(const m of MARKERS){const d=hyp(m.x-player.x,m.y-player.y);if(d>95)m.armed=true;else if(d<48&&m.armed&&!mission&&bustLock<=0){m.armed=false;if(player.veh&&player.veh.kind==='car'){player.veh.vx=player.veh.vy=player.veh.spd=0;}openMarker(m);break;}}}
 
   if((time|0)%20===0)populate(false);
   if(saveT>0){saveT-=dt;if(saveT<=0)persist();}
 
   const spd=player.veh?Math.abs(player.veh.spd||0):0;
   const base=clamp(Math.min(VW,VH)/640,.62,1.1)*(player.mode==='foot'?1.18:1);
-  const tz=base*(player.mode==='plane'?1-.6*player.veh.alt:1-Math.min(.3,spd/32))*(save.items.drone?.8:1);
+  const tz=base*(player.mode==='plane'?1-.6*player.veh.alt:player.mode==='sky'?1-.6*player.alt:1-Math.min(.3,spd/32))*(save.items.drone?.8:1);
   cam.z+=(tz-cam.z)*.04*dt;
   const v=player.veh,lx=v?v.vx*16:0,ly=v?v.vy*16:0;
   cam.x+=(player.x+lx-cam.x)*.09*dt;cam.y+=(player.y+ly-cam.y)*.09*dt;
@@ -1986,7 +2087,8 @@ function draw(){
   for(const p of palms)if(vis(p.x,p.y,40))drawPalm(p);
   drawDecor(x0,y0,x1,y1);
   for(const p of planes)if(p.alt>0&&vis(p.x,p.y,300))drawPlane(p);
-  if(player.mode==='plane'&&player.veh.alt>.05)drawClouds(x0,y0,x1,y1,player.veh.alt);
+  if(player.mode==='sky')drawSkydiver();
+  {const ca=player.mode==='plane'?player.veh.alt:player.mode==='sky'?player.alt:0;if(ca>.05)drawClouds(x0,y0,x1,y1,ca);}
   ctx.restore();
   // lighting
   const dk=darkness(),ss=sunset();
@@ -2015,7 +2117,7 @@ function draw(){
   if(mission&&mission.type==='chain')for(let k=mission.idx;k<mission.steps.length;k++){const s=mission.steps[k];if(s.icon&&(k===mission.idx||s.icon==='swimmer')&&vis(s.x,s.y))drawStepIcon(s);}
   if(mission&&mission.target)drawBeacon(mission.target);
   for(const p of peds)if(p.bubble>0&&vis(p.x,p.y))drawBubble(p.x,p.y,p.say);
-  if(player.mode!=='foot'){const v=player.veh;ctx.strokeStyle='rgba(255,197,61,.9)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(v.x,v.y,(v.kind==='boat'?BT[v.type].len*.5:30)+8,0,TAU);ctx.stroke();}
+  if(player.veh){const v=player.veh;ctx.strokeStyle='rgba(255,197,61,.9)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(v.x,v.y,(v.kind==='boat'?BT[v.type].len*.5:30)+8,0,TAU);ctx.stroke();}
   // GPS arrow (screen space)
   ctx.setTransform(DPR,0,0,DPR,0,0);
   const tgt=race?race.cps[Math.min(race.cp,race.cps.length-1)]:(mission&&mission.target)||waypoint;
@@ -2033,7 +2135,7 @@ function draw(){
 const radar=$('radar'),rctx=radar.getContext('2d');
 function iconDot(g,x,y,r,col,ring){g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,TAU);g.fill();if(ring){g.strokeStyle='#16202c';g.lineWidth=2;g.stroke();}}
 function drawRadar(){
-  const S=radar.width,c=S/2,sc=MS*1.5*(player.mode==='plane'?1-.6*player.veh.alt:1);
+  const S=radar.width,c=S/2,sc=MS*1.5*(player.mode==='plane'?1-.6*player.veh.alt:player.mode==='sky'?1-.6*player.alt:1);
   rctx.setTransform(1,0,0,1,0,0);rctx.clearRect(0,0,S,S);
   rctx.save();rctx.beginPath();rctx.arc(c,c,c,0,TAU);rctx.clip();
   rctx.fillStyle='#2a8bd0';rctx.fillRect(0,0,S,S);
@@ -2089,7 +2191,7 @@ function hud(){
   $('money').textContent=fmtMoney(save.money);
   let st='';for(let i=0;i<5;i++)st+=i<stars?'<b>★</b>':'☆';const se=$('stars');se.innerHTML=st;se.classList.toggle('hot',stars>0&&cars.some(c=>c.chase&&!c.leaving&&hyp(c.x-player.x,c.y-player.y)<800));
   const h=dayT*24,hh=Math.floor(h),mm=Math.floor((h-hh)*60);$('clock').textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
-  const sp=$('speed');if(player.veh){const pl=player.veh.kind==='plane';sp.hidden=false;sp.firstChild.nodeValue=String(Math.round(Math.abs(player.veh.spd||0)*(pl?30:16)));sp.lastChild.textContent=(player.veh.kind==='boat'?'קשר':'קמ"ש')+(pl?' · גובה '+Math.round(player.veh.alt*3000)+' מ\'':'')+(player.mode==='car'&&save.items.nitro&&player.veh.owned?(nitroT>0?' · ניטרו!':nitroCharge>=1?' · ניטרו מוכן':' · ניטרו '+Math.round(nitroCharge*100)+'%'):'');}else sp.hidden=true;
+  const sp=$('speed');if(player.veh){const pl=player.veh.kind==='plane';sp.hidden=false;sp.firstChild.nodeValue=String(Math.round(Math.abs(player.veh.spd||0)*(pl?30:16)));sp.lastChild.textContent=(player.veh.kind==='boat'?'קשר':'קמ"ש')+(pl?' · גובה '+Math.round(player.veh.alt*3000)+' מ\'':'')+(player.mode==='car'&&save.items.nitro&&player.veh.owned?(nitroT>0?' · ניטרו!':nitroCharge>=1?' · ניטרו מוכן':' · ניטרו '+Math.round(nitroCharge*100)+'%'):'');}else if(player.mode==='sky'){sp.hidden=false;sp.firstChild.nodeValue=String(Math.round(player.alt*3000));sp.lastChild.textContent='מ\' גובה'+(player.chute?' · מצנח':' · נפילה חופשית');}else sp.hidden=true;
   $('nos').hidden=!(touchy&&started&&player.mode==='car'&&save.items.nitro&&player.veh.owned);
   const ob=$('obj');
   if(race){
@@ -2112,12 +2214,16 @@ function hud(){
   if(bustLock>0)t='';
   else if(player.mode==='foot'){const v=nearestVehicle();if(v){if(v.kind==='plane')t=v.owned?`לחצו ${key} כדי לעלות על המטוס שלכם`:`לחצו ${key} כדי לקחת את המטוס (פשע!)`;else if(v.kind==='boat')t=v.owned?`לחצו ${key} כדי לעלות על הסירה שלכם`:`לחצו ${key} כדי לקחת את הסירה (פשע!)`;else t=v.owned?`לחצו ${key} כדי להיכנס לרכב שלכם`:v.driver?`לחצו ${key} כדי לקחת את הרכב מהנהג (פשע!)`:`לחצו ${key} כדי לקחת את הרכב (פשע!)`;}}
   else if(player.mode==='boat'&&!race)t=`הגיעו לחוף או לרציף ולחצו ${key} כדי לרדת`;
-  else if(player.mode==='plane'){const p=player.veh;t=p.alt>0?(overRunway(p.x,p.y)?'הורידו מהירות (חץ למטה) כדי לנחות':'כדי לנחות: טוסו מעל מסלול והורידו מהירות'):Math.abs(p.spd)<1?`גזו קדימה על המסלול כדי להמריא · ${key} כדי לצאת`:'האיצו על המסלול כדי להמריא';}
+  else if(player.mode==='plane'){const p=player.veh;t=p.auto?(touchy?'טייס אוטומטי מנחית אתכם · "ביטול" כדי לטוס לבד':'טייס אוטומטי מנחית אתכם · L לביטול'):p.alt>0?(touchy?'"נחיתה" לנחיתה אוטומטית · "צניחה" לקפוץ מהמטוס':'L נחיתה אוטומטית · J צניחה חופשית'):Math.abs(p.spd)<1?`גזו קדימה על המסלול כדי להמריא · ${key} כדי לצאת`:'האיצו על המסלול כדי להמריא';}
+  if(player.mode==='sky')t=player.chute?'כוונו את המצנח עם החצים או הג\'ויסטיק':(touchy?'לחצו "מצנח" כדי לפתוח':'לחצו J כדי לפתוח את המצנח');
   if(!t&&gameActive()&&canTalk())t=touchy?'לחצו "דבר" כדי לדבר עם האדם שלידכם':'לחצו T כדי לדבר עם האדם שלידכם';
   if(!t&&waypoint)t='הולכים ל'+waypoint.label+' · '+Math.round(hyp(waypoint.x-player.x,waypoint.y-player.y)/5)+' מ\'';
   if(!t&&stars>0)t=player.mode==='boat'?'בים המשטרה לא יכולה לתפוס אתכם':'ברחו מהניידות או שוטו לים';
   hint.hidden=!t;if(t)hint.textContent=t;
   $('act').textContent=player.mode==='foot'?'קח':'צא';
+  {const pl=player.mode==='plane'?player.veh:null,on=started&&gameActive();
+   $('landbtn').hidden=!(on&&pl&&(pl.alt>0||pl.auto));$('landbtn').textContent=pl&&pl.auto?'ביטול':'נחיתה';
+   $('jumpbtn').hidden=!(on&&((pl&&pl.alt>=.3)||(player.mode==='sky'&&!player.chute)));$('jumpbtn').textContent=player.mode==='sky'?'מצנח':'צניחה';}
   $('talkbtn').hidden=!(touchy&&started&&gameActive()&&canTalk());
 }
 
