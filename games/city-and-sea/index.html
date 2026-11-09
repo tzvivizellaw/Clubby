@@ -33,7 +33,7 @@ body{background:var(--ink);color:var(--chip-fg);font-family:var(--body);overflow
 .tl{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:calc(12px + env(safe-area-inset-left,0px));display:flex;flex-direction:column;align-items:center;gap:6px}
 #radar{width:150px;height:150px;border-radius:50%;border:3px solid var(--chip);box-shadow:0 3px 10px rgba(0,0,0,.35);background:#2f8fd8}
 #zone{font-size:14px;max-width:170px;text-align:center}
-#mapbtn{pointer-events:auto;border:0;cursor:pointer;color:var(--chip-fg);font-family:var(--body);font-size:14px}
+#mapbtn,#sndbtn{pointer-events:auto;border:0;cursor:pointer;color:var(--chip-fg);font-family:var(--body);font-size:14px}
 #obj{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(380px,calc(100% - 360px));min-width:240px;padding:10px 14px;border-radius:14px;pointer-events:auto}
 #obj h3{margin:0;font-family:var(--display);font-weight:400;font-size:19px;color:var(--sun);display:flex;justify-content:space-between;gap:8px;align-items:center}
 #obj p{margin:4px 0 0;font-size:15px;line-height:1.35}
@@ -119,6 +119,7 @@ kbd{font-family:var(--body);font-weight:700;background:var(--paper2);border-radi
     <canvas id="radar" width="300" height="300"></canvas>
     <div id="zone" class="chip">מרכז העיר</div>
     <button id="mapbtn" class="chip" type="button">מפה (M)</button>
+    <button id="sndbtn" class="chip" type="button">קול: הכול (V)</button>
   </div>
   <div id="obj" class="chip" hidden>
     <h3><span id="objt"></span><button id="objx" type="button">ביטול (X)</button></h3>
@@ -170,7 +171,7 @@ kbd{font-family:var(--body);font-weight:700;background:var(--paper2);border-radi
       <li>יש לכם מכונית משלכם, ואפשר לקנות עוד בסוכנות. נהיגה ברכב שלכם היא חוקית.</li>
       <li>המשטרה רודפת רק אחרי פשע: לקיחת רכב של מישהו אחר או פגיעה בניידת.</li>
       <li>נקודות צהובות הן משימות, אדומות הן מירוצים, סגולות הן חנויות שנכנסים אליהן.</li>
-      <li>במוסך קונים ניטרו, ונוהגים איתו במקש <kbd>N</kbd>.</li>
+      <li>במוסך קונים ניטרו, ונוהגים איתו במקש <kbd>N</kbd>. צופר במקש <kbd>H</kbd>, קול ומוזיקה במקש <kbd>V</kbd>.</li>
     </ul>
     <div class="btns">
       <button id="go" class="btn" type="button" style="justify-content:center">יאללה, משחקים</button>
@@ -491,9 +492,11 @@ function onKeyDown(e){
   if(e.code==='Escape'){if(mapOpen)toggleMap(false);else if(storeOpen)closeStore();else if(!$('panel').hidden)closePanel();return;}
   if(e.repeat){keys.add(e.code);return;}
   if(e.code==='KeyM'){toggleMap();return;}
+  if(e.code==='KeyV'){cycleSound();return;}
   if(!$('panel').hidden||mapOpen||storeOpen)return;
   if(e.code==='KeyE'||e.code==='Enter')action();
   if(e.code==='KeyX')cancelActivity();
+  if(e.code==='KeyH'&&player.mode==='car'){SND.horn();for(const p of peds)if(hyp(p.x-player.x,p.y-player.y)<160&&!p.wait){p.flee=60;p.bubble=50;p.say=pick(['!','בסדר, בסדר!','וואו!']);}}
   keys.add(e.code);
 }
 window.addEventListener('keydown',onKeyDown,true);
@@ -547,6 +550,11 @@ $('nos').addEventListener('pointerup',()=>joy.nitro=false);$('nos').addEventList
 $('mapbtn').addEventListener('click',()=>{if(started)toggleMap();});
 $('mapclose').addEventListener('click',()=>toggleMap(false));
 $('objx').addEventListener('click',cancelActivity);
+function soundLabel(){$('sndbtn').textContent=['קול: הכול','קול: בלי מוזיקה','קול: כבוי'][save.sound||0]+(touchy?'':' (V)');}
+function cycleSound(){save.sound=((save.sound||0)+1)%3;SND.resume();SND.applyVol();soundLabel();persist();SND.click();}
+$('sndbtn').addEventListener('click',()=>{cycleSound();$('sndbtn').blur();});
+addEventListener('pointerdown',()=>{if(started)SND.resume();},true);
+addEventListener('keydown',()=>{if(started)SND.resume();},true);
 const touchy=matchMedia('(pointer:coarse)').matches||'ontouchstart'in window;
 function input(){
   const hb=K('Space')||joy.hb;
@@ -580,7 +588,7 @@ function nearestVehicle(){
 }
 function crime(name){
   if(race)return;
-  stars=Math.min(5,stars+1);calm=0;
+  stars=Math.min(5,stars+1);calm=0;SND.alarm();
   toast('פשע: '+name,'רמת חיפוש '+'★'.repeat(stars),1900);
 }
 function action(){
@@ -597,7 +605,7 @@ function action(){
       if(!v.owned&&!v.stolen){v.stolen=true;crime('גניבת סירה');}
       player.mode='boat';
     }
-    player.veh=v;
+    player.veh=v;SND.door();
   }else if(player.mode==='car'){
     const c=player.veh;
     for(const s of[-Math.PI/2,Math.PI/2,Math.PI,0]){const x=c.x+Math.cos(c.a+s)*38,y=c.y+Math.sin(c.a+s)*38;if(!blockedFoot(x,y)){exitVehicle(x,y);return;}}
@@ -608,7 +616,7 @@ function action(){
     toast('צריך להגיע לחוף או לרציף','שם אפשר לרדת מהסירה',1400);
   }
 }
-function exitVehicle(x,y){
+function exitVehicle(x,y){SND.door();
   const v=player.veh;if(v.kind==='car'){v.spd=0;v.vx=v.vy=0;}else{v.vx*=.3;v.vy*=.3;}
   player.x=x;player.y=y;player.mode='foot';player.veh=null;
   if(race&&!race.done)endRace(false,'יצאתם מהרכב, המרוץ בוטל');
@@ -651,6 +659,7 @@ function drivePlayerCar(c,inp,dt){
   else{
     const hit=hyp(c.vx,c.vy);
     if(!blockedCar(nx,c.y)){c.x=nx;c.vy*=-.2;}else if(!blockedCar(c.x,ny)){c.y=ny;c.vx*=-.2;}else{c.vx*=-.3;c.vy*=-.3;}
+    if(hit>4)SND.crash(Math.min(1,hit/9));
     if(hit>4)for(let k=0;k<6;k++)spark(c.x+na*T.len/2,c.y+nb*T.len/2);
   }
   // skids & smoke
@@ -880,6 +889,7 @@ function updateChain(m){
   if(hyp(player.x-s.x,player.y-s.y)<(s.r||70)&&slow)arriveStep(s);
 }
 function arriveStep(s){
+  if(mission.idx<mission.steps.length-1)SND.ding();
   if(s.pay)addMoney(s.pay);
   if(s.msg)toast(s.msg,s.pay?'+'+s.pay+' ₪':'שלב '+(mission.idx+1)+' מתוך '+mission.steps.length,1500);
   if(s.icon)burst(s.x,s.y,14);
@@ -918,8 +928,8 @@ function nextFare(){
   mission.ped=ped;mission.stage='pickup';mission.target=ped;mission.timer=mission.max=75*60;
   mission.text='אספו את הנוסע שמחכה ברחוב';
 }
-function completeMission(reward,msg){addMoney(reward);save.done++;persist();toast(msg||'המשימה הושלמה!','+'+reward+' ₪',2200);burst(player.x,player.y);if(mission&&mission.boat)mission.boat.keep=false;mission=null;}
-function failMission(msg){if(mission){if(mission.ped)peds.splice(peds.indexOf(mission.ped),1);if(mission.boat)mission.boat.keep=false;}mission=null;toast(msg||'המשימה נכשלה',null,1900);}
+function completeMission(reward,msg){SND.win();addMoney(reward);save.done++;persist();toast(msg||'המשימה הושלמה!','+'+reward+' ₪',2200);burst(player.x,player.y);if(mission&&mission.boat)mission.boat.keep=false;mission=null;}
+function failMission(msg){SND.fail();if(mission){if(mission.ped)peds.splice(peds.indexOf(mission.ped),1);if(mission.boat)mission.boat.keep=false;}mission=null;toast(msg||'המשימה נכשלה',null,1900);}
 function updateMission(dt){
   const m=mission;if(!m)return;
   m.timer-=dt;
@@ -945,7 +955,7 @@ function updateMission(dt){
     else if(player.veh===m.boat&&hyp(m.boat.x-m.target.x,m.boat.y-m.target.y)<130)completeMission(400,'המטען הגיע לאי!');
     else if(player.veh!==m.boat){m.stage='board';m.target=m.boat;m.text='חזרו לסירה הכתומה';}
   }else if(m.type==='coins'){
-    for(let k=m.coins.length-1;k>=0;k--){const c=m.coins[k];if(hyp(px-c.x,py-c.y)<(save.items.magnet?130:46)){m.coins.splice(k,1);m.got++;addMoney(40);for(let q=0;q<10;q++)parts.push({x:c.x,y:c.y,vx:(rnd()-.5)*4,vy:(rnd()-.5)*4,life:30,max:30,r:3,grow:0,c:'255,214,10',a:1});}}
+    for(let k=m.coins.length-1;k>=0;k--){const c=m.coins[k];if(hyp(px-c.x,py-c.y)<(save.items.magnet?130:46)){m.coins.splice(k,1);m.got++;addMoney(40);SND.coin();for(let q=0;q<10;q++)parts.push({x:c.x,y:c.y,vx:(rnd()-.5)*4,vy:(rnd()-.5)*4,life:30,max:30,r:3,grow:0,c:'255,214,10',a:1});}}
     if(!m.coins.length){completeMission(300,'כל המטבעות נאספו!');return;}
     let best=null,bd=1e9;for(const c of m.coins){const d=hyp(c.x-px,c.y-py);if(d<bd){bd=d;best=c;}}m.target=best;
   }
@@ -986,6 +996,7 @@ function updateRace(dt){
   const r=race;if(!r)return;
   if(r.count>0){
     const before=Math.ceil(r.count/60);r.count-=dt;const after=Math.ceil(r.count/60);
+    if(after!==before&&after<=3){if(r.count>0)SND.beep();else SND.go();}
     $('count').hidden=false;$('count').textContent=r.count>0?Math.min(3,after):'צא!';
     if(r.count<=0)setTimeout(()=>{$('count').hidden=true;},700);
     return;
@@ -996,7 +1007,7 @@ function updateRace(dt){
   const v=player.veh;if(!v)return;
   const cp=r.cps[r.cp];
   if(hyp(v.x-cp.x,v.y-cp.y)<(r.rd.kind==='car'?100:150)){
-    r.cp++;burst(cp.x,cp.y,8);
+    r.cp++;burst(cp.x,cp.y,8);if(r.cp<r.cps.length)SND.ding();else if(r.finished.length===0)SND.win();else SND.ding();
     if(r.cp>=r.cps.length){
       r.place=r.finished.length+1;r.done=true;r.endT=260;
       const prize=Math.round((r.rd.prize[r.place-1]||0)*(save.items.vip?1.5:1));addMoney(prize);
@@ -1110,7 +1121,7 @@ function itemState(it){
   if(it.paint){const ok=player.mode==='car'&&player.veh.owned;return ok?{label:it.price+' ₪ · צביעה',dis:save.money<it.price}:{label:'צריך להגיע ברכב שלכם',dis:true};}
   return{label:it.price.toLocaleString('he-IL')+' ₪ · קנייה',dis:save.money<it.price};
 }
-function useItem(it){
+function useItem(it){SND.cash();
   if(it.slot){
     if(!ownsItem(it)){addMoney(-it.price);save.items[it.id]=true;toast('קניתם '+it.name+'!',null,1300);}
     if(it.slot==='glasses')save.outfit.glasses=!save.outfit.glasses;else save.outfit[it.slot]=it.col;
@@ -1137,7 +1148,7 @@ function renderStore(){
   }
   if(keep){const f=box.querySelector(`[data-id="${keep}"]`);if(f&&!f.disabled)f.focus();else $('sexit').focus();}
 }
-function openStore(id){storeOpen=id;paused=true;keys.clear();renderStore();$('store').hidden=false;$('sitems').scrollTop=0;$('sexit').focus();}
+function openStore(id){SND.bell();storeOpen=id;paused=true;keys.clear();renderStore();$('store').hidden=false;$('sitems').scrollTop=0;$('sexit').focus();}
 function closeStore(){storeOpen=null;$('store').hidden=true;paused=!started||mapOpen||!$('panel').hidden;persist();}
 $('sexit').addEventListener('click',closeStore);
 function buyCar(t,m){
@@ -1152,6 +1163,99 @@ function rentBoat(t){
   toast('השכרתם '+BT[t].name+'!','היא מחכה ליד הרציף',1800);
 }
 
+
+/* ================= sound (synthesized, no files) ================= */
+const SND=(()=>{
+  let ac=null,master,musicG,sfxG,noiseBuf,loops={},seqT=null,step=0,nextT=0,mode='chill';
+  const mtof=m=>440*Math.pow(2,(m-69)/12);
+  function init(){
+    if(ac)return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+    try{ac=new AC();}catch(e){ac=null;return;}
+    master=ac.createGain();master.connect(ac.destination);
+    musicG=ac.createGain();musicG.connect(master);sfxG=ac.createGain();sfxG.connect(master);
+    noiseBuf=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    loops.engine=mkLoop('sawtooth',380);loops.engine2=mkLoop('square',300);
+    loops.boat=mkLoop('triangle',520);loops.siren=mkLoop('square',2400);
+    loops.skid=mkNoise('bandpass',1700,3);loops.waves=mkNoise('lowpass',480,.7);loops.wake=mkNoise('bandpass',900,1);
+    applyVol();nextT=ac.currentTime+.1;seqT=setInterval(schedule,25);
+  }
+  function resume(){init();if(ac&&ac.state==='suspended')ac.resume().catch(()=>{});}
+  function mkLoop(type,cut){const o=ac.createOscillator();o.type=type;o.frequency.value=60;const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.value=cut;const g=ac.createGain();g.gain.value=0;o.connect(f);f.connect(g);g.connect(sfxG);o.start();return{o,f,g};}
+  function mkNoise(type,freq,q){const n=ac.createBufferSource();n.buffer=noiseBuf;n.loop=true;const f=ac.createBiquadFilter();f.type=type;f.frequency.value=freq;f.Q.value=q;const g=ac.createGain();g.gain.value=0;n.connect(f);f.connect(g);g.connect(sfxG);n.start();return{n,f,g};}
+  function level(){return save.sound==null?0:save.sound;}
+  function applyVol(){if(!ac)return;const L=level(),t=ac.currentTime;master.gain.setTargetAtTime(L===2?0:1,t,.05);musicG.gain.setTargetAtTime(L===0?.22:0,t,.2);sfxG.gain.setTargetAtTime(.75,t,.05);}
+  function set(l,v,t=.08){if(ac&&l)l.g.gain.setTargetAtTime(v,ac.currentTime,t);}
+  function tone(f,dur,type='square',vol=.2,when=0,slide=0,dest){
+    if(!ac)return;const t=ac.currentTime+when,o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,slide),t+dur);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.008);g.gain.exponentialRampToValueAtTime(.0008,t+dur);o.connect(g);g.connect(dest||sfxG);o.start(t);o.stop(t+dur+.05);
+  }
+  function noise(dur,vol=.3,freq=1200,type='lowpass',when=0,dest){
+    if(!ac)return;const t=ac.currentTime+when,n=ac.createBufferSource();n.buffer=noiseBuf;const f=ac.createBiquadFilter();f.type=type;f.frequency.value=freq;const g=ac.createGain();
+    g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0008,t+dur);n.connect(f);f.connect(g);g.connect(dest||sfxG);n.start(t,Math.random());n.stop(t+dur+.05);
+  }
+  /* ---- music ---- */
+  const SONGS={
+    chill:{bpm:108,chords:[[48,52,55],[45,48,52],[41,45,48],[43,47,50]],
+      mel:[76,0,79,0,81,79,76,0,74,0,72,0,74,76,0,0, 72,0,76,0,79,0,76,74,72,0,69,0,72,0,0,0, 69,0,72,0,77,76,74,0,72,0,74,0,76,0,0,0, 74,0,79,0,77,76,74,0,71,0,74,0,79,0,0,0],
+      kick:[0,8],snare:[4,12],hat:2},
+    chase:{bpm:138,chords:[[45,48,52],[41,45,48],[43,47,50],[40,44,47]],
+      mel:[81,0,81,79,76,0,76,0,81,0,84,0,83,81,79,0, 77,0,77,76,72,0,72,0,77,0,81,0,79,77,76,0, 79,0,79,77,74,0,74,0,79,0,83,0,81,79,77,0, 76,0,80,0,83,0,80,0,76,0,74,0,71,0,68,0],
+      kick:[0,4,8,12],snare:[4,12],hat:1},
+    race:{bpm:132,chords:[[48,52,55],[43,47,50],[45,48,52],[41,45,48]],
+      mel:[72,0,76,79,84,0,79,76,72,0,76,79,84,0,86,84, 79,0,83,86,91,0,86,83,79,0,83,86,88,0,86,83, 81,0,84,88,93,0,88,84,81,0,84,88,89,0,88,84, 77,0,81,84,89,0,84,81,79,0,77,0,76,0,74,0],
+      kick:[0,4,8,10,12],snare:[4,12],hat:1},
+  };
+  function schedule(){
+    if(!ac||level()!==0)return;
+    const S=SONGS[mode],sp=60/S.bpm/4;
+    while(nextT<ac.currentTime+.12){
+      const st=step%16,bar=(step>>4)%4,ch=S.chords[bar],w=nextT-ac.currentTime;
+      if([0,3,6,8,11,14].includes(st))tone(mtof(ch[0]-12+(st===6||st===14?7:0)),sp*1.8,'triangle',.32,w,0,musicG);
+      if(st%2===0)tone(mtof(ch[(st/2)%3]+12),sp*1.5,'square',.035,w,0,musicG);
+      const m=S.mel[(step%64)];if(m)tone(mtof(m),sp*1.7,'square',.06,w,0,musicG);
+      if(S.kick.includes(st))tone(150,.16,'sine',.5,w,40,musicG);
+      if(S.snare.includes(st))noise(.12,.18,2500,'highpass',w,musicG);
+      if(st%S.hat===0)noise(.03,.05,7000,'highpass',w,musicG);
+      step++;nextT+=sp;
+    }
+  }
+  /* ---- per-frame ambience ---- */
+  function tick(){
+    if(!ac)return;
+    const want=race&&race.count<=0&&!race.done?'race':stars>0&&cars.some(c=>c.chase&&!c.leaving&&hyp(c.x-player.x,c.y-player.y)<1100)?'chase':'chill';
+    if(want!==mode){mode=want;}
+    const active=started&&!paused,v=player.veh,t=ac.currentTime;
+    if(active&&player.mode==='car'){const sp=Math.abs(v.spd||0),f=45+sp*13+(nitroT>0?40:0);loops.engine.o.frequency.setTargetAtTime(f,t,.05);loops.engine2.o.frequency.setTargetAtTime(f*.5,t,.05);set(loops.engine,.07+Math.min(.07,sp*.01));set(loops.engine2,.05);}
+    else{set(loops.engine,0);set(loops.engine2,0);}
+    if(active&&player.mode==='boat'){const sp=v.spd||0;loops.boat.o.frequency.setTargetAtTime(38+sp*9,t,.08);set(loops.boat,.12+Math.min(.08,sp*.015));set(loops.wake,Math.min(.12,sp*.02));}
+    else{set(loops.boat,0);set(loops.wake,0);}
+    let pd=1e9;if(active)for(const c of cars)if(c.chase&&!c.leaving){const d=hyp(c.x-player.x,c.y-player.y);if(d<pd)pd=d;}
+    if(pd<1300){loops.siren.o.frequency.setTargetAtTime(680+260*Math.sin(performance.now()/260),t,.02);set(loops.siren,.06*(1-pd/1300));}else set(loops.siren,0);
+    set(loops.skid,active&&v&&v.lastW?.09:0,.03);
+    const shore=active?Math.abs(player.x-shoreAt(player.y)):1e9,wv=player.mode==='boat'?.05:Math.max(0,.09*(1-shore/700));
+    loops.waves.g.gain.setTargetAtTime(active?wv*(.7+.3*Math.sin(performance.now()/1400)):0,t,.3);
+  }
+  return{
+    init,resume,tick,applyVol,
+    get on(){return !!ac;},
+    door:()=>{tone(220,.06,'square',.12);tone(140,.08,'square',.12,.05);},
+    coin:()=>{tone(988,.08,'square',.14);tone(1319,.22,'square',.14,.07);},
+    cash:()=>{tone(1568,.07,'square',.12);tone(2093,.07,'square',.12,.06);noise(.25,.15,4000,'highpass',.12);tone(1046,.3,'triangle',.18,.12);},
+    bell:()=>{tone(1318,.5,'sine',.18);tone(1760,.6,'sine',.12,.12);},
+    ding:()=>{tone(1046,.12,'triangle',.22);tone(1568,.3,'triangle',.22,.08);},
+    beep:()=>tone(660,.18,'square',.2),
+    go:()=>tone(1320,.45,'square',.22),
+    win:()=>{[523,659,784,1046,784,1046].forEach((f,i)=>tone(f,i===5?.6:.14,'square',.18,i*.11));},
+    fail:()=>{[392,330,262,196].forEach((f,i)=>tone(f,.22,'triangle',.25,i*.16));},
+    crash:k=>{noise(.35,.5*k,700,'lowpass');tone(90,.25,'sine',.4*k,0,40);},
+    alarm:()=>{for(let i=0;i<4;i++)tone(i%2?740:980,.12,'square',.13,i*.13);},
+    busted:()=>{[196,185,174,164].forEach((f,i)=>tone(f,.35,'sawtooth',.18,i*.3));},
+    whoosh:()=>{noise(.7,.35,500,'bandpass');tone(200,.6,'sawtooth',.08,0,900);},
+    horn:()=>{tone(392,.35,'square',.15);tone(494,.35,'square',.12);},
+    click:()=>tone(900,.04,'square',.08),
+  };
+})();
+
 /* ================= update ================= */
 function update(dt){
   dayT=(dayT+dt/(60*480))%1;
@@ -1165,7 +1269,7 @@ function update(dt){
   }else if(player.mode==='car'){
     if(nitroT>0){nitroT-=dt;const c=player.veh,ca=Math.cos(c.a),sa=Math.sin(c.a);for(let k=0;k<2;k++)parts.push({x:c.x-ca*26+(rnd()-.5)*6,y:c.y-sa*26+(rnd()-.5)*6,vx:-ca*3+(rnd()-.5),vy:-sa*3+(rnd()-.5),life:16,max:16,r:5,grow:-.2,c:pick(['80,200,255','255,160,40','255,255,255']),a:.9});}
     else if(nitroCharge<1)nitroCharge=Math.min(1,nitroCharge+dt/480);
-    if((K('KeyN')||joy.nitro)&&save.items.nitro&&player.veh.owned&&nitroCharge>=1&&!locked){nitroT=110;nitroCharge=0;}
+    if((K('KeyN')||joy.nitro)&&save.items.nitro&&player.veh.owned&&nitroCharge>=1&&!locked){nitroT=110;nitroCharge=0;SND.whoosh();}
     drivePlayerCar(player.veh,inp,dt);player.x=player.veh.x;player.y=player.veh.y;}
   else{drivePlayerBoat(player.veh,inp,dt);player.x=player.veh.x;player.y=player.veh.y;}
 
@@ -1173,7 +1277,7 @@ function update(dt){
   if(crimeCD>0)crimeCD-=dt;
   for(let i=0;i<cars.length;i++){const a=cars[i];for(let j=i+1;j<cars.length;j++){const b=cars[j];if(a.ghost>0||b.ghost>0)continue;const dx=a.x-b.x,dy=a.y-b.y;if(Math.abs(dx)>40||Math.abs(dy)>40)continue;const d=hyp(dx,dy);if(d>0&&d<36){const k=(36-d)/2,nx=dx/d*k,ny=dy/d*k;
     if(!blockedCar(a.x+nx,a.y+ny)){a.x+=nx;a.y+=ny;}if(!blockedCar(b.x-nx,b.y-ny)){b.x-=nx;b.y-=ny;}
-    const pv=player.veh;if(a===pv||b===pv){const o=a===pv?b:a;const sp=hyp(pv.vx,pv.vy);if(sp>3.5){spark((a.x+b.x)/2,(a.y+b.y)/2);spark((a.x+b.x)/2,(a.y+b.y)/2);}if(o.police&&sp>4&&crimeCD<=0){crimeCD=120;crime('פגיעה בניידת');}pv.vx*=.82;pv.vy*=.82;if(o.ai&&sp>3){o.ghost=40;}}}}}
+    const pv=player.veh;if(a===pv||b===pv){const o=a===pv?b:a;const sp=hyp(pv.vx,pv.vy);if(sp>3.5){if(!pv.crashCD||time>pv.crashCD){SND.crash(Math.min(1,sp/9));pv.crashCD=time+20;}spark((a.x+b.x)/2,(a.y+b.y)/2);spark((a.x+b.x)/2,(a.y+b.y)/2);}if(o.police&&sp>4&&crimeCD<=0){crimeCD=120;crime('פגיעה בניידת');}pv.vx*=.82;pv.vy*=.82;if(o.ai&&sp>3){o.ghost=40;}}}}}
   for(const p of peds)updatePed(p,dt);
   for(const b of boats){b.bob+=.05*dt;if(b===player.veh)continue;if(b.racer){continue;}b.vx*=Math.pow(.97,dt);b.vy*=Math.pow(.97,dt);if(Math.abs(b.vx)+Math.abs(b.vy)>.05)moveBoat(b,dt);}
   for(let k=parts.length-1;k>=0;k--){const p=parts[k];p.life-=dt;if(p.life<=0){parts.splice(k,1);continue;}p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.95;p.vy*=.95;p.r+=p.grow*dt;}
@@ -1194,7 +1298,7 @@ function update(dt){
     let caught=false;const slow=player.mode==='foot'||(player.mode==='car'&&Math.abs(player.veh.spd)<1.3);
     if(player.mode!=='boat'&&slow)for(const c of cars)if(c.chase&&!c.leaving&&hyp(c.x-player.x,c.y-player.y)<54)caught=true;
     bustT=caught?bustT+dt:Math.max(0,bustT-dt);
-    if(bustT>70){bustT=0;bustLock=150;const fine=Math.round(save.money*.1);addMoney(-fine);persist();toast('נתפסתם!',fine?'קנס של '+fine+' ₪':'',2300);if(mission)failMission('נתפסתם, המשימה נכשלה');}
+    if(bustT>70){bustT=0;bustLock=150;SND.busted();const fine=Math.round(save.money*.1);addMoney(-fine);persist();toast('נתפסתם!',fine?'קנס של '+fine+' ₪':'',2300);if(mission)failMission('נתפסתם, המשימה נכשלה');}
   }
   updateMission(dt);updateRace(dt);
 
@@ -1554,7 +1658,7 @@ function drawBigMap(){
   if(tgt){const[x,y]=P(tgt.x,tgt.y);g.strokeStyle='#ffc53d';g.lineWidth=4;g.beginPath();g.arc(x,y,13,0,TAU);g.stroke();}
   const[px,py]=P(player.x,player.y);g.fillStyle='#fff';g.strokeStyle='#16202c';g.lineWidth=3;g.beginPath();g.arc(px,py,9,0,TAU);g.fill();g.stroke();
 }
-function toggleMap(force){
+function toggleMap(force){SND.click();
   mapOpen=force===undefined?!mapOpen:force;
   $('mapwrap').hidden=!mapOpen;paused=mapOpen||!$('panel').hidden||!started;
   if(mapOpen){keys.clear();drawBigMap();$('mapclose').focus();}
@@ -1598,6 +1702,7 @@ let last=performance.now(),hudT=0,radT=0;
 function frame(now){
   requestAnimationFrame(frame);
   const dt=clamp((now-last)/16.67,0,3);last=now;
+  SND.tick();
   if(!paused){time+=dt;update(dt);}
   else if(!started){time+=dt;cam.x+=dt*.9;cam.y+=Math.sin(time*.004)*.6;for(const c of cars)if(c.ai)updateAICar(c,dt);for(const p of peds)updatePed(p,dt);cam.z=clamp(Math.min(VW,VH)/640,.62,1.1);}
   draw();
@@ -1605,7 +1710,7 @@ function frame(now){
   if((radT+=dt)>3){radT=0;drawRadar();}
 }
 applyOutfit();
-function begin(){started=true;paused=false;$('start').hidden=true;try{document.activeElement&&document.activeElement.blur();window.focus();cv.focus({preventScroll:true});}catch(_){}if(touchy)$('touch').hidden=false;cam.x=player.x;cam.y=player.y;toast('ברוכים הבאים לעיר וים','המכונית הירוקה לידכם היא שלכם',2200);}
+function begin(){SND.resume();soundLabel();started=true;paused=false;$('start').hidden=true;try{document.activeElement&&document.activeElement.blur();window.focus();cv.focus({preventScroll:true});}catch(_){}if(touchy)$('touch').hidden=false;cam.x=player.x;cam.y=player.y;toast('ברוכים הבאים לעיר וים','המכונית הירוקה לידכם היא שלכם',2200);}
 $('go').addEventListener('click',begin);
 if(save.done>0||save.money!==500){$('go').textContent=`ממשיכים (${fmtMoney(save.money)})`;$('fresh').hidden=false;}
 $('fresh').addEventListener('click',()=>{save={money:500,best:{},done:0,items:{},outfit:{shirt:'#ffc53d',hat:'#e63946',glasses:false}};applyOutfit();persist();begin();});
