@@ -470,9 +470,18 @@ function resetWorld(){
 
 /* ================= input ================= */
 const keys=new Set();
-addEventListener('keydown',e=>{
-  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();
+const KEYMAP={arrowup:'ArrowUp',arrowdown:'ArrowDown',arrowleft:'ArrowLeft',arrowright:'ArrowRight',up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight',' ':'Space',spacebar:'Space',enter:'Enter',escape:'Escape',esc:'Escape',shift:'ShiftLeft',
+  w:'KeyW',a:'KeyA',s:'KeyS',d:'KeyD',e:'KeyE',m:'KeyM',x:'KeyX',n:'KeyN',"'":'KeyW','ש':'KeyA','ד':'KeyS','ג':'KeyD','ק':'KeyE','צ':'KeyM','ס':'KeyX','מ':'KeyN'};
+function codeOf(e){const k=(e.key||'').toLowerCase();return KEYMAP[k]||e.code||'';}
+function gameActive(){return started&&$('panel').hidden&&!mapOpen&&!storeOpen;}
+function onKeyDown(e){
+  if(e.__done)return;e.__done=true;
+  const code=codeOf(e);
+  const ae=document.activeElement;
+  if(gameActive()&&ae&&ae!==document.body&&ae.blur)ae.blur();
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(code)&&(gameActive()||!started))e.preventDefault();
   if(!started)return;
+  e={code,repeat:e.repeat};
   if(e.code==='Escape'){if(mapOpen)toggleMap(false);else if(storeOpen)closeStore();else if(!$('panel').hidden)closePanel();return;}
   if(e.repeat){keys.add(e.code);return;}
   if(e.code==='KeyM'){toggleMap();return;}
@@ -480,8 +489,13 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyE'||e.code==='Enter')action();
   if(e.code==='KeyX')cancelActivity();
   keys.add(e.code);
-});
-addEventListener('keyup',e=>keys.delete(e.code));
+}
+window.addEventListener('keydown',onKeyDown,true);
+document.addEventListener('keydown',onKeyDown,true);
+function onKeyUp(e){if(e.__done)return;e.__done=true;keys.delete(codeOf(e));if(e.code)keys.delete(e.code);}
+window.addEventListener('keyup',onKeyUp,true);document.addEventListener('keyup',onKeyUp,true);
+cv.tabIndex=-1;cv.addEventListener('pointerdown',()=>{try{window.focus();cv.focus({preventScroll:true});}catch(_){}});
+addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&started&&$('touch').hidden){$('touch').hidden=false;}},true);
 addEventListener('blur',()=>keys.clear());
 const K=(...a)=>a.some(k=>keys.has(k));
 const joy={x:0,y:0,on:false,id:null,hb:false};
@@ -1557,7 +1571,7 @@ function frame(now){
   if((radT+=dt)>3){radT=0;drawRadar();}
 }
 applyOutfit();
-function begin(){started=true;paused=false;$('start').hidden=true;if(touchy)$('touch').hidden=false;cam.x=player.x;cam.y=player.y;toast('ברוכים הבאים לעיר וים','המכונית הירוקה לידכם היא שלכם',2200);}
+function begin(){started=true;paused=false;$('start').hidden=true;try{document.activeElement&&document.activeElement.blur();window.focus();cv.focus({preventScroll:true});}catch(_){}if(touchy)$('touch').hidden=false;cam.x=player.x;cam.y=player.y;toast('ברוכים הבאים לעיר וים','המכונית הירוקה לידכם היא שלכם',2200);}
 $('go').addEventListener('click',begin);
 if(save.done>0||save.money!==500){$('go').textContent=`ממשיכים (${fmtMoney(save.money)})`;$('fresh').hidden=false;}
 $('fresh').addEventListener('click',()=>{save={money:500,best:{},done:0,items:{},outfit:{shirt:'#ffc53d',hat:'#e63946',glasses:false}};applyOutfit();persist();begin();});
