@@ -38,7 +38,9 @@ export default function GameScreen() {
       ) : (
         <WebView
           originWhitelist={['*']}
-          source={{ html: GOAL_RUSH_HTML }}
+          // baseUrl gives the page a real origin so localStorage (stars, skins, unlocks) persists
+          source={{ html: GOAL_RUSH_HTML, baseUrl: 'https://clubby.app/game/' }}
+          domStorageEnabled
           style={{ flex: 1, backgroundColor: '#0f0a1e' }}
           scrollEnabled={false}
           bounces={false}
