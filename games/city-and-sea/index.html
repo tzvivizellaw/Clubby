@@ -88,6 +88,21 @@ kbd{font-family:var(--body);font-weight:700;background:var(--paper2);border-radi
 .item button:disabled{opacity:.5;cursor:not-allowed}
 .item button:focus-visible,#sexit:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
 .sfoot{margin-top:12px}
+#talk{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(560px,calc(100% - 32px));direction:rtl;z-index:5}
+.tcard{background:var(--paper);color:var(--ink);border-radius:18px;padding:14px 16px 16px;box-shadow:0 8px 0 rgba(0,0,0,.22),0 10px 30px rgba(0,0,0,.35)}
+.thead{display:flex;align-items:center;gap:10px}
+.tav{width:42px;height:42px;border-radius:50%;flex:none;position:relative;border:3px solid var(--ink);overflow:hidden}
+.tav i{position:absolute;left:50%;top:22%;width:58%;height:58%;transform:translateX(-50%);border-radius:50%}
+.tav u{position:absolute;left:50%;top:14%;width:62%;height:30%;transform:translateX(-50%);border-radius:50% 50% 10% 10%}
+.thead b{font-family:var(--display);font-weight:400;font-size:22px}
+.thead small{font-size:13px;color:#5a6472;margin-right:auto}
+#ttext{margin:10px 0 12px;font-size:18px;line-height:1.45;min-height:2.9em}
+.topts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.topts button{border:0;border-radius:12px;padding:10px 12px;font-family:var(--body);font-weight:700;font-size:15.5px;background:var(--paper2);color:var(--ink);cursor:pointer;text-align:right;box-shadow:0 3px 0 #c9bc9b}
+.topts button:hover{background:#e6d9b8}
+.topts button:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.topts button kbd{margin-left:6px;font-size:12px}
+#talkbtn{right:calc(26px + env(safe-area-inset-right,0px));bottom:calc(184px + env(safe-area-inset-bottom,0px));width:72px;height:72px;background:#c77dff;font-size:17px;box-shadow:0 4px 0 #7b2cbf}
 #nos{right:calc(122px + env(safe-area-inset-right,0px));bottom:calc(140px + env(safe-area-inset-bottom,0px));width:64px;height:64px;background:#4cc9f0;font-size:14px;box-shadow:0 4px 0 #1d7fa0}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn:focus-visible,.tbtn:focus-visible,#mapbtn:focus-visible,#objx:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
@@ -136,8 +151,14 @@ kbd{font-family:var(--body);font-weight:700;background:var(--paper2);border-radi
   <button id="hb" class="tbtn" type="button">בלם</button>
   <button id="act" class="tbtn" type="button">קח</button>
   <button id="nos" class="tbtn" type="button" hidden>ניטרו</button>
+  <button id="talkbtn" class="tbtn" type="button" hidden>דבר</button>
 </div>
 <div id="panel" class="modal" hidden><div class="card" id="pcard"></div></div>
+<div id="talk" hidden><div class="tcard">
+  <div class="thead"><span class="tav" id="tav"><u id="tavh"></u><i id="tavf"></i></span><b id="tname"></b><small id="tplace"></small></div>
+  <p id="ttext" aria-live="polite"></p>
+  <div class="topts" id="topts"></div>
+</div></div>
 <div id="store" class="modal" hidden><div class="card">
   <div class="shead" id="shead"><h2 id="sname"></h2><p id="stag"></p></div>
   <div class="awning" id="awn"></div>
@@ -168,6 +189,7 @@ kbd{font-family:var(--body);font-weight:700;background:var(--paper2);border-radi
     <ul>
       <li><kbd>חיצים</kbd> או <kbd>WASD</kbd> לזוז ולנהוג, <kbd>רווח</kbd> בלם יד</li>
       <li>בטלפון: גוררים אצבע בצד שמאל של המסך כדי לזוז ולנהוג, והכפתור הצהוב לוקח רכב</li>
+      <li><kbd>T</kbd> לדבר עם אנשים ברחוב: שואלים איך מגיעים, מבקשים טיפ או בדיחה, ומציעים טרמפ</li>
       <li><kbd>E</kbd> להיכנס לרכב ולצאת ממנו, <kbd>M</kbd> מפה, <kbd>X</kbd> ביטול משימה</li>
       <li>יש לכם מכונית משלכם, ואפשר לקנות עוד בסוכנות. נהיגה ברכב שלכם היא חוקית.</li>
       <li>המשטרה רודפת רק אחרי פשע: לקיחת רכב של מישהו אחר או פגיעה בניידת.</li>
@@ -632,9 +654,9 @@ function resetWorld(){
 /* ================= input ================= */
 const keys=new Set();
 const KEYMAP={arrowup:'ArrowUp',arrowdown:'ArrowDown',arrowleft:'ArrowLeft',arrowright:'ArrowRight',up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight',' ':'Space',spacebar:'Space',enter:'Enter',escape:'Escape',esc:'Escape',shift:'ShiftLeft',
-  w:'KeyW',a:'KeyA',s:'KeyS',d:'KeyD',e:'KeyE',m:'KeyM',x:'KeyX',n:'KeyN',"'":'KeyW','ש':'KeyA','ד':'KeyS','ג':'KeyD','ק':'KeyE','צ':'KeyM','ס':'KeyX','מ':'KeyN'};
+  w:'KeyW',a:'KeyA',s:'KeyS',d:'KeyD',e:'KeyE',m:'KeyM',x:'KeyX',n:'KeyN',t:'KeyT','א':'KeyT',"'":'KeyW','ש':'KeyA','ד':'KeyS','ג':'KeyD','ק':'KeyE','צ':'KeyM','ס':'KeyX','מ':'KeyN'};
 function codeOf(e){const k=(e.key||'').toLowerCase();return KEYMAP[k]||e.code||'';}
-function gameActive(){return started&&$('panel').hidden&&!mapOpen&&!storeOpen;}
+function gameActive(){return started&&$('panel').hidden&&!mapOpen&&!storeOpen&&!talk;}
 function onKeyDown(e){
   if(e.__done)return;e.__done=true;
   const code=codeOf(e);
@@ -643,10 +665,12 @@ function onKeyDown(e){
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(code)&&(gameActive()||!started))e.preventDefault();
   if(!started)return;
   e={code,repeat:e.repeat};
+  if(talk){if(e.code==='Escape')endTalk();else{const m=/^Digit([1-9])$/.exec(e.code);if(m){const b=$('topts').children[+m[1]-1];if(b)b.click();}}return;}
   if(e.code==='Escape'){if(mapOpen)toggleMap(false);else if(storeOpen)closeStore();else if(!$('panel').hidden)closePanel();return;}
   if(e.repeat){keys.add(e.code);return;}
   if(e.code==='KeyM'){toggleMap();return;}
   if(e.code==='KeyV'){cycleSound();return;}
+  if(e.code==='KeyT'&&gameActive()){startTalk();return;}
   if(!$('panel').hidden||mapOpen||storeOpen)return;
   if(e.code==='KeyE'||e.code==='Enter')action();
   if(e.code==='KeyX')cancelActivity();
@@ -671,7 +695,7 @@ stick.addEventListener('pointerup',joyEnd);stick.addEventListener('pointercancel
 $('act').addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;e.preventDefault();if(!paused)action();});
 $('hb').addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;e.preventDefault();joy.hb=true;});
 /* touch: floating joystick anywhere on the left half, buttons by touchstart */
-const TBTN={act:()=>{if(!paused)action();},hb:()=>{joy.hb=true;},nos:()=>{joy.nitro=true;}};
+const TBTN={talkbtn:()=>{startTalk();},act:()=>{if(!paused)action();},hb:()=>{joy.hb=true;},nos:()=>{joy.nitro=true;}};
 const TEND={hb:()=>{joy.hb=false;},nos:()=>{joy.nitro=false;}};
 const btnTouch={};
 let stickHome=null;
@@ -966,6 +990,7 @@ function moveRacer(c,dt){
 }
 function updatePed(p,dt){
   p.t+=dt;if(p.bubble>0)p.bubble-=dt;
+  if(p.talking)return;
   if(p.wait){p.a=Math.atan2(player.y-p.y,player.x-p.x);if(p.bubble<=0&&rnd()<.01){p.bubble=80;p.say='מונית!';}return;}
   for(const c of cars){if(Math.abs(c.spd)<1)continue;const dx=p.x-c.x,dy=p.y-c.y;if(Math.abs(dx)>50||Math.abs(dy)>50)continue;const d=hyp(dx,dy);if(d<46){const nx=dx/(d||1),ny=dy/(d||1),tx=p.x+nx*4.5*dt,ty=p.y+ny*4.5*dt;if(!blockedFoot(tx,ty)){p.x=tx;p.y=ty;}if(p.flee<=0&&c===player.veh){p.flee=90;p.bubble=60;p.say=pick(['זהירות!','וואו!','אוי!','לאט!']);}}}
   let sp=p.spd;
@@ -1507,6 +1532,116 @@ const SND=(()=>{
   };
 })();
 
+
+/* ================= talking to people ================= */
+let talk=null,waypoint=null,talkTyping=null;
+const NAMES=['יוסי','דני','רון','נועם','אבי','עומר','איתי','שי','גיל','משה','דוד','אריאל','יונתן','עידו'];
+const JOKES=[
+  'מה יותר מהיר, חום או קור? חום! כי את הקור אפשר לתפוס.',
+  'מה עולה ואף פעם לא יורד? הגיל!',
+  'למה המכונית לא רעבה אף פעם? כי היא תמיד מלאה בדלק!',
+  'מה אמרה המכונית למכונית שלידה? בואי נחנה פה ביחד!',
+  'למה הדג לא משחק כדורגל? כי הוא מפחד מהרשת!',
+  'מה עושה מטוס כשהוא עייף? נוחת לנוח!',
+  'למה השעון הלך לרופא? כי היו לו יותר מדי מחוגים... כלומר כאבים!',
+  'מה המספר הכי אמיץ? שבע, כי הוא לא מפחד משמונה!',
+];
+let heVoice=null;
+function loadVoices(){try{const v=speechSynthesis.getVoices();heVoice=v.find(x=>/^he|^iw/i.test(x.lang||''))||null;}catch(e){}}
+try{if(window.speechSynthesis){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}}catch(e){}
+function speak(text,p){
+  try{if((save.sound||0)===2||!window.speechSynthesis||!heVoice)return;speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text.replace(/["()]/g,''));u.voice=heVoice;u.lang=heVoice.lang;u.pitch=p.pitch;u.rate=1.05;speechSynthesis.speak(u);}catch(e){}
+}
+function nearestPed(){
+  let best=null,bd=1e9;const lim=player.mode==='foot'?62:95;
+  for(const p of peds){if(p.wait||p.flee>0)continue;const d=hyp(p.x-player.x,p.y-player.y);if(d<lim&&d<bd){bd=d;best=p;}}
+  return best;
+}
+function canTalk(){
+  if(!started||race||bustLock>0)return null;
+  if(player.mode==='foot'||(player.mode==='car'&&Math.abs(player.veh.spd)<1))return nearestPed();
+  return null;
+}
+function regionNow(){return regionOf(player.x);}
+function dirWord(dx,dy){const a=Math.atan2(dy,dx),o=['מזרחה','דרומה־מזרחה','דרומה','דרומה־מערבה','מערבה','צפונה־מערבה','צפונה','צפונה־מזרחה'];return o[((Math.round(a/(Math.PI/4))%8)+8)%8];}
+function startTalk(){
+  const p=canTalk();if(!p)return;
+  p.name=p.name||pick(NAMES);p.pitch=p.pitch||(.75+rnd()*.5);p.talking=true;p.bubble=0;
+  p.a=Math.atan2(player.y-p.y,player.x-p.x);
+  talk={p};paused=true;keys.clear();
+  $('tname').textContent=p.name;$('tplace').textContent=placeName(p.x,p.y);
+  $('tav').style.background=p.shirt;$('tavf').style.background=p.skin;$('tavh').style.background=p.hat||p.hair;
+  $('talk').hidden=false;SND.click();
+  const rg=regionNow();
+  const hi=rg==='cy'?pick(['יאסו! זה "שלום" ביוונית. ברוכים הבאים לקפריסין!','קאלימרה! בוקר טוב מקפריסין!']):rg==='us'?pick(['הלו! כלומר, שלום! ברוכים הבאים לאמריקה!','היי! איך אתה מרגיש בעיר הגדולה?']):pick(['שלום! איך אפשר לעזור?','היי! יום יפה היום, נכון?','אהלן! מה קורה?','שלום שלום! צריך משהו?']);
+  reply(hi);
+}
+function endTalk(){
+  if(!talk)return;talk.p.talking=false;talk.p.bubble=60;talk.p.say='ביי!';talk=null;$('talk').hidden=true;
+  if(talkTyping){clearInterval(talkTyping);talkTyping=null;}
+  try{window.speechSynthesis&&speechSynthesis.cancel();}catch(e){}
+  paused=!started||mapOpen||!!storeOpen||!$('panel').hidden;
+}
+function reply(text,opts){
+  if(!talk)return;
+  const el=$('ttext');if(talkTyping)clearInterval(talkTyping);
+  const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(reduce){el.textContent=text;}else{let i=0;el.textContent='';talkTyping=setInterval(()=>{i+=2;el.textContent=text.slice(0,i);if(i>=text.length){clearInterval(talkTyping);talkTyping=null;}},22);}
+  speak(text,talk.p);
+  const box=$('topts');box.textContent='';
+  (opts||menu()).forEach(([label,fn],k)=>{const b=document.createElement('button');b.type='button';if(!touchy){const kb=document.createElement('kbd');kb.textContent=String(k+1);b.appendChild(kb);}b.appendChild(document.createTextNode(label));b.addEventListener('click',()=>{SND.click();fn();});box.appendChild(b);});
+  const f=box.querySelector('button');if(f&&!touchy)f.focus();
+}
+function menu(){
+  const o=[['מה נשמע?',askHow],['יש לך טיפ בשבילי?',askTip],['איך מגיעים ל...?',askWay],['ספר לי בדיחה',askJoke]];
+  if(player.mode==='car'&&!mission&&!talk.p.keep)o.push(['צריך טרמפ?',askRide]);
+  o.push(['להתראות',bye]);return o;
+}
+function askHow(){
+  const rg=regionNow();
+  reply(rg==='cy'?pick(['מצוין! השמש פה זורחת כל היום.','טוב מאוד! הרגע אכלתי זיתים טריים מהעץ.','נהדר! כבר ראית את החוף של לימסול?']):rg==='us'?pick(['סבבה! אבל יש פה כל כך הרבה מוניות צהובות.','מעולה! עליתי היום לגג של גורד שחקים.','טוב! מחר אני נוסע למדבר לראות קקטוסים.']):pick(['מצוין! יום יפה היום.','קצת עייף, הלכתי המון.','הכי טוב! ראית את המטוסים שעפים מעל העיר?','נהדר! הייתי עכשיו בפארק המרכזי, יש שם מזרקה יפה.']));
+}
+function askTip(){
+  if(stars>0){reply('המשטרה מחפשת אותך! תתרחק מהניידות, או תברח לים. בים הם לא יכולים לתפוס אותך.');return;}
+  const rg=regionNow();
+  const home=['במוסך טורבו קונים ניטרו. לוחצים N והמכונית טסה!','בפיצה רומא תמיד צריכים שליחים, וזה כסף טוב.','רוצה לטוס? יש שדה תעופה בדרום העיר.','מכונית שקונים בסוכנות היא חוקית, אף אחד לא ירדוף אחריך.','בגאדג\'ט סיטי יש סקייטבורד, הולכים איתו הרבה יותר מהר.','באי הדקלים יש מגדלור, ואומרים שיש שם גם אוצר...','במירוצים כדאי לבלום לפני הפנייה, לא בתוכה.'];
+  const cy=['בניקוסיה יש רחובות עתיקים, שווה לראות.','החוף של לימסול הכי יפה באי.','בהרי טרודוס יש המון עצי זית.','מהשדה בלרנקה אפשר לטוס חזרה הביתה.'];
+  const us=['הבניינים פה הכי גבוהים שיש!','אם תיסע מזרחה בכביש המהיר תגיע למדבר.','בפארק המרכזי אפשר לנוח בין העצים.','ליד החוף יש אי קטן עם פסל ענק.'];
+  reply(pick(rg==='cy'?cy:rg==='us'?us:home));
+}
+function askJoke(){reply(pick(JOKES));}
+function bye(){const t=pick(['להתראות! תיזהר בכביש.','ביי! נתראה!','יום טוב!','שיהיה בהצלחה!']);reply(t,[['סגירה',endTalk]]);}
+function placesHere(){
+  const rg=regionNow(),A=AIRPORTS,mid=a=>({x:a.run.x+a.run.w/2,y:a.apron.y+a.apron.h/2});
+  if(rg==='cy')return[...TOWNS.filter(t=>t.x0<30000&&t.x0>12500).map(t=>({label:t.name,x:t.cx,y:t.y0})),{label:'שדה התעופה',...mid(A[1])},{label:'החוף של לימסול',x:18060,y:5480}];
+  if(rg==='us')return[{label:'גורדי השחקים',x:44380,y:3700},{label:'הפארק המרכזי',x:44140,y:3000},{label:'המדבר',x:54000,y:6600},{label:'שדה התעופה',...mid(A[2])}];
+  const mk=id=>{const m=MARKERS.find(q=>q.id===id);return{label:m.label,x:m.x,y:m.y};};
+  return[mk('pizza'),mk('dealer'),mk('garage'),mk('fashion'),mk('gadget'),{label:'המרינה',x:PIER.x+70,y:MY},{label:'שדה התעופה',...mid(A[0])},{label:'תחנת המשטרה',...STATION}];
+}
+function askWay(){
+  const L=placesHere().map(pl=>({...pl,d:hyp(pl.x-player.x,pl.y-player.y)})).sort((a,b)=>a.d-b.d).slice(0,6);
+  reply('לאן אתה רוצה להגיע?',L.map(pl=>[pl.label,()=>{
+    waypoint={x:pl.x,y:pl.y,label:pl.label};
+    const m=Math.round(pl.d/5);
+    reply(`${pl.label}? זה ${dirWord(pl.x-player.x,pl.y-player.y)} מכאן, בערך ${m.toLocaleString('he-IL')} מטר. סימנתי לך את הדרך עם חץ צהוב!`);
+  }]).concat([['חזרה',()=>reply('משהו אחר?')]]));
+}
+function askRide(){
+  const p=talk.p;
+  const rg=regionNow();let dest=null;
+  if(rg==='home')dest=randomSidewalk(p.x,p.y,900,2200);
+  else for(let k=0;k<200&&!dest;k++){const a=rnd()*TAU,d=900+rnd()*1300,x=p.x+Math.cos(a)*d,y=p.y+Math.sin(a)*d;if(!blockedCar(x,y)&&regionOf(x)===rg)dest={x,y};}
+  if(!dest){reply('תודה, אבל אני כבר כמעט בבית!');return;}
+  const where=placeName(dest.x,dest.y);
+  reply(`וואו, כן! תיקח אותי ל${where.replace(/^.* · /,'')}?`,[['בטח, תעלה!',()=>{
+    const name=p.name,pay=60+Math.round(hyp(dest.x-p.x,dest.y-p.y)/25);
+    peds.splice(peds.indexOf(p),1);talk.p={...p,talking:false};endTalk();
+    mission={type:'chain',kind:'ride',title:'טרמפ ל'+name,stage:'go',timer:0,text:'',target:null,steps:[{t:`הסיעו את ${name} ליעד המסומן`,need:'car',x:dest.x,y:dest.y,r:80}],final:pay,finalMsg:`${name} הגיע! תודה על הטרמפ`,idx:-1};
+    nextStep();toast(name+' עלה לרכב','סעו ליעד המסומן',1500);
+  }],['לא עכשיו',()=>reply('אין בעיה, אולי בפעם אחרת.')]]);
+}
+
 /* ================= update ================= */
 function update(dt){
   dayT=(dayT+dt/(60*480))%1;
@@ -1553,6 +1688,7 @@ function update(dt){
     if(bustT>70){bustT=0;bustLock=150;SND.busted();const fine=Math.round(save.money*.1);addMoney(-fine);persist();toast('נתפסתם!',fine?'קנס של '+fine+' ₪':'',2300);if(mission)failMission('נתפסתם, המשימה נכשלה');}
   }
   updateMission(dt);updateRace(dt);
+  if(waypoint&&hyp(waypoint.x-player.x,waypoint.y-player.y)<90){toast('הגעתם: '+waypoint.label,null,1400);SND.ding();waypoint=null;}
 
   if(!race&&!(player.mode==='plane'&&player.veh.alt>0)){for(const m of MARKERS){const d=hyp(m.x-player.x,m.y-player.y);if(d>95)m.armed=true;else if(d<48&&m.armed&&!mission&&bustLock<=0){m.armed=false;if(player.veh&&player.veh.kind==='car'){player.veh.vx=player.veh.vy=player.veh.spd=0;}openMarker(m);break;}}}
 
@@ -1873,7 +2009,7 @@ function draw(){
   if(player.mode!=='foot'){const v=player.veh;ctx.strokeStyle='rgba(255,197,61,.9)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(v.x,v.y,(v.kind==='boat'?BT[v.type].len*.5:30)+8,0,TAU);ctx.stroke();}
   // GPS arrow (screen space)
   ctx.setTransform(DPR,0,0,DPR,0,0);
-  const tgt=race?race.cps[Math.min(race.cp,race.cps.length-1)]:mission&&mission.target;
+  const tgt=race?race.cps[Math.min(race.cp,race.cps.length-1)]:(mission&&mission.target)||waypoint;
   if(tgt){
     const sx=(tgt.x-cam.x)*z+VW/2,sy=(tgt.y-cam.y)*z+VH/2,m=56;
     if(sx<m||sx>VW-m||sy<m||sy>VH-m){
@@ -1902,7 +2038,7 @@ function drawRadar(){
   for(const v of cars)if(v.chase&&!v.leaving||save.items.scanner&&v.police){const[x,y]=save.items.scanner?edge(v.x,v.y):P(v.x,v.y);iconDot(rctx,x,y,6,(time/8|0)%2?'#ff2d2d':'#2d5bff');}
   if(race)for(const r of race.racers){const[x,y]=P(r.x,r.y);iconDot(rctx,x,y,5,r.color,true);}
   if(mission&&mission.type==='coins')for(const k of mission.coins){const[x,y]=edge(k.x,k.y);iconDot(rctx,x,y,4,'#ffd60a',true);}
-  const tgt=race?race.cps[Math.min(race.cp,race.cps.length-1)]:mission&&mission.target;
+  const tgt=race?race.cps[Math.min(race.cp,race.cps.length-1)]:(mission&&mission.target)||waypoint;
   if(tgt){const[x,y]=edge(tgt.x,tgt.y);rctx.fillStyle=race?'#ff5d73':'#ffc53d';rctx.strokeStyle='#fff';rctx.lineWidth=3;rctx.beginPath();rctx.arc(x,y,10,0,TAU);rctx.fill();rctx.stroke();}
   rctx.restore();
   const a=player.veh?player.veh.a:player.a;
@@ -1929,7 +2065,7 @@ function drawBigMap(){
   for(const m of MARKERS){const[x,y]=P(m.x,m.y);iconDot(g,x,y,8,MCOL[m.type],true);}
   {const[x,y]=P(STATION.x,STATION.y);iconDot(g,x,y,8,'#3b6bff',true);}
   for(const v of cars)if(v.mine){const[x,y]=P(v.x,v.y);iconDot(g,x,y,6,'#3ddc84',true);}
-  const tgt=race?race.cps[Math.min(race.cp,race.cps.length-1)]:mission&&mission.target;
+  const tgt=race?race.cps[Math.min(race.cp,race.cps.length-1)]:(mission&&mission.target)||waypoint;
   if(tgt){const[x,y]=P(tgt.x,tgt.y);g.strokeStyle='#ffc53d';g.lineWidth=4;g.beginPath();g.arc(x,y,13,0,TAU);g.stroke();}
   const[px,py]=P(player.x,player.y);g.fillStyle='#fff';g.strokeStyle='#16202c';g.lineWidth=3;g.beginPath();g.arc(px,py,9,0,TAU);g.fill();g.stroke();
 }
@@ -1968,9 +2104,12 @@ function hud(){
   else if(player.mode==='foot'){const v=nearestVehicle();if(v){if(v.kind==='plane')t=v.owned?`לחצו ${key} כדי לעלות על המטוס שלכם`:`לחצו ${key} כדי לקחת את המטוס (פשע!)`;else if(v.kind==='boat')t=v.owned?`לחצו ${key} כדי לעלות על הסירה שלכם`:`לחצו ${key} כדי לקחת את הסירה (פשע!)`;else t=v.owned?`לחצו ${key} כדי להיכנס לרכב שלכם`:v.driver?`לחצו ${key} כדי לקחת את הרכב מהנהג (פשע!)`:`לחצו ${key} כדי לקחת את הרכב (פשע!)`;}}
   else if(player.mode==='boat'&&!race)t=`הגיעו לחוף או לרציף ולחצו ${key} כדי לרדת`;
   else if(player.mode==='plane'){const p=player.veh;t=p.alt>0?(overRunway(p.x,p.y)?'הורידו מהירות (חץ למטה) כדי לנחות':'כדי לנחות: טוסו מעל מסלול והורידו מהירות'):Math.abs(p.spd)<1?`גזו קדימה על המסלול כדי להמריא · ${key} כדי לצאת`:'האיצו על המסלול כדי להמריא';}
+  if(!t&&gameActive()&&canTalk())t=touchy?'לחצו "דבר" כדי לדבר עם האדם שלידכם':'לחצו T כדי לדבר עם האדם שלידכם';
+  if(!t&&waypoint)t='הולכים ל'+waypoint.label+' · '+Math.round(hyp(waypoint.x-player.x,waypoint.y-player.y)/5)+' מ\'';
   if(!t&&stars>0)t=player.mode==='boat'?'בים המשטרה לא יכולה לתפוס אתכם':'ברחו מהניידות או שוטו לים';
   hint.hidden=!t;if(t)hint.textContent=t;
   $('act').textContent=player.mode==='foot'?'קח':'צא';
+  $('talkbtn').hidden=!(touchy&&started&&gameActive()&&canTalk());
 }
 
 /* ================= loop ================= */
