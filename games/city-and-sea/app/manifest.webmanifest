@@ -1,0 +1,27 @@
+{
+  "name": "עיר וים",
+  "short_name": "עיר וים",
+  "description": "משחק עיר מצוירת: משימות, מירוצים, חנויות ושייט באוקיינוס.",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#16202c",
+  "theme_color": "#16202c",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
