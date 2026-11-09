@@ -253,7 +253,7 @@ const PIER={x:Math.round(shoreAt(MY))-150,y:MY-38,w:620,h:76};
 const ISL={x:10800,y:2300,rx:560,ry:440};
 function islandF(x,y,s=1){const dx=(x-ISL.x)/(ISL.rx*s),dy=(y-ISL.y)/(ISL.ry*s);if(dx*dx+dy*dy>1.6)return 1;const a=Math.atan2(dy,dx);return dx*dx+dy*dy-(1+.07*Math.sin(a*5)+.04*Math.sin(a*11));}
 const IDOCK={x:ISL.x-ISL.rx-230,y:ISL.y-30,w:290,h:60};
-const isLand=(x,y)=>x<shoreAt(y)||inRect(x,y,PIER)||inRect(x,y,IDOCK)||islandF(x,y)<0||x>coastA(y)||inCyprus(x,y)||hyp(x-STAT.x,y-STAT.y)<STAT.r;
+const isLand=(x,y)=>x<shoreAt(y)||inRect(x,y,PIER)||inRect(x,y,IDOCK)||islandF(x,y)<0||x>coastA(y)||inCyprus(x,y)||hyp(x-STAT.x,y-STAT.y)<STAT.r||inRect(x,y,SDOCK);
 const nearNode=v=>clamp(Math.round((v-RX0)/SP),0,NB);
 
 function districtOf(i,j){
@@ -408,6 +408,7 @@ const CYB={x0:15500,x1:23600,y0:2000,y1:5700};
 function inCyprus(x,y){return x>CYB.x0&&x<CYB.x1&&y>CYB.y0&&y<CYB.y1&&inPoly(x,y,CY);}
 function coastA(y){return 40000+Math.sin(y/700)*400+Math.sin(y/170)*60;}
 const STAT={x:39000,y:4200,r:280};
+const SDOCK={x:39000+280-70,y:4200-28,w:340,h:56};
 const DESERT=50500;
 const desertAt=y=>DESERT+Math.sin(y/300)*180;
 const AIRPORTS=[
@@ -480,6 +481,9 @@ function drawLands(c,x0,y0,x1,y1,mini){
     c.fillStyle='#f1dc9f';c.beginPath();c.arc(STAT.x,STAT.y,STAT.r,0,TAU);c.fill();
     c.fillStyle='#8cc46e';c.beginPath();c.arc(STAT.x,STAT.y,STAT.r-70,0,TAU);c.fill();
     c.fillStyle='#d6cfbf';c.fillRect(STAT.x-80,STAT.y-80,160,160);
+    c.fillStyle='rgba(0,40,80,.25)';c.fillRect(SDOCK.x+8,SDOCK.y+10,SDOCK.w,SDOCK.h);c.fillStyle=mini?'#9c6b3f':'#a87444';c.fillRect(SDOCK.x,SDOCK.y,SDOCK.w,SDOCK.h);
+    if(!mini){c.strokeStyle='#86592f';c.lineWidth=2;c.beginPath();for(let x=SDOCK.x;x<SDOCK.x+SDOCK.w;x+=14){c.moveTo(x,SDOCK.y);c.lineTo(x,SDOCK.y+SDOCK.h);}c.stroke();
+      c.font='700 18px Assistant, sans-serif';c.textAlign='center';c.direction='rtl';c.fillStyle='#fff';c.strokeStyle='rgba(22,32,44,.8)';c.lineWidth=4;c.strokeText('סירות חינם',SDOCK.x+SDOCK.w/2+40,SDOCK.y-60);c.fillText('סירות חינם',SDOCK.x+SDOCK.w/2+40,SDOCK.y-60);}
   }
   if(x1>39200){
     const st=mini?100:25,ys=Math.max(-50,Math.floor(y0/st)*st-st),ye=Math.min(H+50,y1+st);
@@ -654,6 +658,7 @@ function resetWorld(){
   boats.push(mkBoat('speed',px+170,py-40,0,'#e63946'),mkBoat('jet',px+290,py-34,0,'#06d6a0'),mkBoat('yacht',px+440,py-58,0,'#1d3557'),
     mkBoat('speed',px+200,py+ph+40,Math.PI,'#ffb703'),mkBoat('speed',px+360,py+ph+40,Math.PI,'#3a86ff'),
     mkBoat('yacht',10100,5200,1.2,'#8338ec'),mkBoat('speed',11200,3600,-.6,'#fb5607'),mkBoat('jet',IDOCK.x+40,IDOCK.y-34,0,'#ffb703'));
+  for(const b of freeBoatSpots())boats.push(mkBoat(b.type,b.x,b.y,b.a,'#2ec4b6',{owned:true,free:true}));
   cam.x=player.x;cam.y=player.y;
   const pp=(ap,list)=>list.forEach(([t,dx,c])=>planes.push(mkPlane(t,ap.apron.x+dx,ap.apron.y+ap.apron.h/2,Math.PI/2,c)));
   pp(AIRPORTS[0],[['cessna',700,'#e63946'],['jet',1050,'#3a86ff'],['cessna',1450,'#2a9d8f']]);
@@ -1665,6 +1670,19 @@ function askRide(){
 
 
 /* ================= autopilot landing & skydiving ================= */
+function freeBoatSpots(){return[
+  {type:'speed',x:SDOCK.x+SDOCK.w-60,y:SDOCK.y-44,a:0,isle:STAT},{type:'jet',x:SDOCK.x+SDOCK.w-150,y:SDOCK.y+SDOCK.h+34,a:0,isle:STAT},
+  {type:'speed',x:IDOCK.x+150,y:IDOCK.y+IDOCK.h+44,a:Math.PI,isle:{x:ISL.x,y:ISL.y,r:ISL.rx}},
+];}
+function ensureIslandBoat(){
+  if(player.mode!=='foot')return;
+  for(const s of freeBoatSpots()){
+    if(hyp(player.x-s.isle.x,player.y-s.isle.y)>s.isle.r+120)continue;
+    if(boats.some(b=>hyp(b.x-s.x,b.y-s.y)<700))continue;
+    if(onScreen(s.x,s.y,60))continue;
+    boats.push(mkBoat(s.type,s.x,s.y,s.a,'#2ec4b6',{owned:true,free:true}));
+  }
+}
 function nearestAirport(x,y){let b=null,bd=1e18;for(const a of AIRPORTS){const d=hyp(a.run.x+a.run.w/2-x,a.run.y-y);if(d<bd){bd=d;b=a;}}return b;}
 function autoLandStart(p,silent){
   if(p.alt<=0){if(!silent)toast('המטוס כבר על הקרקע',null,1200);return;}
@@ -1796,6 +1814,7 @@ function update(dt){
     bustT=caught?bustT+dt:Math.max(0,bustT-dt);
     if(bustT>70){bustT=0;bustLock=150;SND.busted();const fine=Math.round(save.money*.1);addMoney(-fine);persist();toast('נתפסתם!',fine?'קנס של '+fine+' ₪':'',2300);if(mission)failMission('נתפסתם, המשימה נכשלה');}
   }
+  if((time|0)%30===0)ensureIslandBoat();
   for(const pl of planes)if(pl.auto&&pl!==player.veh)flyPlane(pl,{x:0,y:0,joy:false,hb:false},dt);
   updateMission(dt);updateRace(dt);
   if(waypoint&&hyp(waypoint.x-player.x,waypoint.y-player.y)<90){toast('הגעתם: '+waypoint.label,null,1400);SND.ding();waypoint=null;}
@@ -2212,7 +2231,7 @@ function hud(){
   }else ob.hidden=true;
   const hint=$('hint');let t='';const key=touchy?'הכפתור הצהוב':'E';
   if(bustLock>0)t='';
-  else if(player.mode==='foot'){const v=nearestVehicle();if(v){if(v.kind==='plane')t=v.owned?`לחצו ${key} כדי לעלות על המטוס שלכם`:`לחצו ${key} כדי לקחת את המטוס (פשע!)`;else if(v.kind==='boat')t=v.owned?`לחצו ${key} כדי לעלות על הסירה שלכם`:`לחצו ${key} כדי לקחת את הסירה (פשע!)`;else t=v.owned?`לחצו ${key} כדי להיכנס לרכב שלכם`:v.driver?`לחצו ${key} כדי לקחת את הרכב מהנהג (פשע!)`:`לחצו ${key} כדי לקחת את הרכב (פשע!)`;}}
+  else if(player.mode==='foot'){const v=nearestVehicle();if(v){if(v.kind==='plane')t=v.owned?`לחצו ${key} כדי לעלות על המטוס שלכם`:`לחצו ${key} כדי לקחת את המטוס (פשע!)`;else if(v.kind==='boat')t=v.free?`לחצו ${key} כדי לעלות על הסירה (חינם)`:v.owned?`לחצו ${key} כדי לעלות על הסירה שלכם`:`לחצו ${key} כדי לקחת את הסירה (פשע!)`;else t=v.owned?`לחצו ${key} כדי להיכנס לרכב שלכם`:v.driver?`לחצו ${key} כדי לקחת את הרכב מהנהג (פשע!)`:`לחצו ${key} כדי לקחת את הרכב (פשע!)`;}}
   else if(player.mode==='boat'&&!race)t=`הגיעו לחוף או לרציף ולחצו ${key} כדי לרדת`;
   else if(player.mode==='plane'){const p=player.veh;t=p.auto?(touchy?'טייס אוטומטי מנחית אתכם · "ביטול" כדי לטוס לבד':'טייס אוטומטי מנחית אתכם · L לביטול'):p.alt>0?(touchy?'"נחיתה" לנחיתה אוטומטית · "צניחה" לקפוץ מהמטוס':'L נחיתה אוטומטית · J צניחה חופשית'):Math.abs(p.spd)<1?`גזו קדימה על המסלול כדי להמריא · ${key} כדי לצאת`:'האיצו על המסלול כדי להמריא';}
   if(player.mode==='sky')t=player.chute?'כוונו את המצנח עם החצים או הג\'ויסטיק':(touchy?'לחצו "מצנח" כדי לפתוח':'לחצו J כדי לפתוח את המצנח');
