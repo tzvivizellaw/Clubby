@@ -64,6 +64,26 @@ kbd{font-family:var(--body);font-weight:700;background:var(--paper2);border-radi
 .btn small{font-family:var(--body);font-weight:700;font-size:15px;opacity:.9}
 .btn.alt{background:var(--paper2);color:var(--ink);box-shadow:0 4px 0 #c9bc9b;justify-content:center}
 .btn.buy{background:#2b9a5c;box-shadow:0 4px 0 #1b6b3e}
+#store .card{max-width:680px;padding:0;overflow:hidden}
+.shead{padding:18px 22px 12px;color:#fff}
+.shead h2{margin:0;font-family:var(--display);font-weight:400;font-size:34px;line-height:1.05;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.shead p{margin:4px 0 0;font-size:15px;opacity:.95}
+.awning{height:18px;background:repeating-linear-gradient(90deg,var(--a1,#7b2cbf) 0 30px,#fff 30px 60px);-webkit-mask:radial-gradient(circle at 15px 0,#000 15px,transparent 15.5px) 0 0/30px 18px repeat-x;mask:radial-gradient(circle at 15px 0,#000 15px,transparent 15.5px) 0 0/30px 18px repeat-x}
+.sbody{padding:12px 18px 18px;background:repeating-linear-gradient(45deg,#f6efe0 0 18px,#efe6d2 18px 36px)}
+.wallet{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-weight:700;font-size:15px;margin-bottom:10px}
+.wallet b{color:#1b6b3e;font-variant-numeric:tabular-nums}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;max-height:min(56vh,480px);overflow:auto;padding:2px}
+.item{background:#fff;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:5px;box-shadow:0 3px 0 rgba(0,0,0,.12);min-width:0}
+.item svg{width:100%;height:58px;display:block}
+.item h4{margin:0;font-size:16px;line-height:1.2}
+.item p{margin:0;font-size:13px;color:#4a5563;line-height:1.35;flex:1}
+.item button{border:0;border-radius:10px;padding:8px 6px;font-family:var(--body);font-weight:800;font-size:14.5px;cursor:pointer;background:#2b9a5c;color:#fff}
+.item button.own{background:#e9dfc6;color:var(--ink)}
+.item button.on{background:var(--sun);color:var(--ink)}
+.item button:disabled{opacity:.5;cursor:not-allowed}
+.item button:focus-visible,#sexit:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.sfoot{margin-top:12px}
+#nos{right:calc(122px + env(safe-area-inset-right,0px));bottom:calc(140px + env(safe-area-inset-bottom,0px));width:64px;height:64px;background:#4cc9f0;font-size:14px;box-shadow:0 4px 0 #1d7fa0}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn:focus-visible,.tbtn:focus-visible,#mapbtn:focus-visible,#objx:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
 #mapwrap{position:fixed;inset:0;background:rgba(14,20,28,.92);direction:rtl;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:calc(14px + env(safe-area-inset-top,0px)) calc(14px + env(safe-area-inset-bottom,0px))}
@@ -109,14 +129,25 @@ kbd{font-family:var(--body);font-weight:700;background:var(--paper2);border-radi
   <div id="stick"><div id="knob"></div></div>
   <button id="hb" class="tbtn" type="button">בלם</button>
   <button id="act" class="tbtn" type="button">קח</button>
+  <button id="nos" class="tbtn" type="button" hidden>ניטרו</button>
 </div>
 <div id="panel" class="modal" hidden><div class="card" id="pcard"></div></div>
+<div id="store" class="modal" hidden><div class="card">
+  <div class="shead" id="shead"><h2 id="sname"></h2><p id="stag"></p></div>
+  <div class="awning" id="awn"></div>
+  <div class="sbody">
+    <div class="wallet"><span id="smsg"></span><span>בארנק: <b id="smoney"></b></span></div>
+    <div class="items" id="sitems"></div>
+    <div class="sfoot"><button class="btn alt" id="sexit" type="button">יציאה מהחנות</button></div>
+  </div>
+</div></div>
 <div id="mapwrap" hidden>
   <header><h2>מפת עיר וים</h2><button id="mapclose" type="button">סגירה</button></header>
   <canvas id="mapc"></canvas>
   <div class="legend">
     <span><i style="background:#ffc53d"></i>משימה</span>
     <span><i style="background:#ff5d73"></i>מרוץ</span>
+    <span><i style="background:#c77dff"></i>חנות</span>
     <span><i style="background:#3ddc84"></i>סוכנות רכב</span>
     <span><i style="background:#4cc9f0"></i>השכרת סירות</span>
     <span><i style="background:#3b6bff"></i>תחנת משטרה</span>
@@ -132,7 +163,8 @@ kbd{font-family:var(--body);font-weight:700;background:var(--paper2);border-radi
       <li><kbd>E</kbd> להיכנס לרכב ולצאת ממנו, <kbd>M</kbd> מפה, <kbd>X</kbd> ביטול משימה</li>
       <li>יש לכם מכונית משלכם, ואפשר לקנות עוד בסוכנות. נהיגה ברכב שלכם היא חוקית.</li>
       <li>המשטרה רודפת רק אחרי פשע: לקיחת רכב של מישהו אחר או פגיעה בניידת.</li>
-      <li>נקודות צהובות הן משימות, אדומות הן מירוצים. היעדים מסומנים על המפה.</li>
+      <li>נקודות צהובות הן משימות, אדומות הן מירוצים, סגולות הן חנויות שנכנסים אליהן.</li>
+      <li>במוסך קונים ניטרו, ונוהגים איתו במקש <kbd>N</kbd>.</li>
     </ul>
     <div class="btns">
       <button id="go" class="btn" type="button" style="justify-content:center">יאללה, משחקים</button>
@@ -286,6 +318,15 @@ for(let i=0;i<NB;i++){blocks[i]=[];for(let j=0;j<NB;j++)blocks[i][j]=genBlock(i,
 (()=>{const p=blocks[5][9].b[0];Object.assign(p,{label:'פיצה רומא',ht:34,roof:'#c0392b',c:'#f3e1c7',wA:shade('#f3e1c7',.1),wB:shade('#f3e1c7',-.3),heli:false});
  const t=blocks[9][6].b[0];Object.assign(t,{label:'תחנת מוניות',ht:30,roof:'#f2b705',heli:false});})();
 
+function makeStore(i,j,label,c,roof){
+  const B=blocks[i][j];B.park=false;B.fountain=false;B.trees=[];B.pools=[];B.cars=[];B.ground='#c9c3b6';
+  B.b=[bld(B.x0+10,B.y0+10,B.x1-B.x0-20,150,32,c,roof,'shop',{label})];
+  B.lot={x:B.x0+10,y:B.y0+180,w:B.x1-B.x0-20,h:B.y1-B.y0-190};
+  B.trees.push({x:B.x0+18,y:B.y1-18,r:14},{x:B.x1-18,y:B.y1-18,r:14});
+}
+makeStore(6,5,'אופנה ברחוב','#e9d5f5','#7b2cbf');
+makeStore(2,8,'מוסך טורבו','#e5e5e5','#d62828');
+makeStore(8,9,"גאדג'ט סיטי",'#d8eef7','#0077b6');
 const extras=[];
 const MOFF={x:8560,y:MY+70,w:150,h:96};
 extras.push(bld(MOFF.x,MOFF.y,MOFF.w,MOFF.h,26,'#f6f1e7','#2a6f97','shop',{label:'מרינה'}));
@@ -374,6 +415,7 @@ const STATION={x:(R(7)+R(8))/2,y:R(3)+62};
 const SAVE_KEY='ir-veyam-v2';
 let save={money:500,best:{},done:0};
 try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(s&&typeof s.money==='number')save=Object.assign(save,s);}catch(e){}
+save.items=save.items||{};save.outfit=Object.assign({shirt:'#ffc53d',hat:'#e63946',glasses:false},save.outfit||{});
 let saveT=0;
 function persist(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(save));}catch(e){}}
 function addMoney(n){save.money=Math.max(0,save.money+n);saveT=30;}
@@ -386,12 +428,19 @@ const MARKERS=[
   {id:'taxi',type:'mission',mission:'taxi',x:(R(9)+R(10))/2,y:R(6)+60,label:'תחנת מוניות'},
   {id:'crate',type:'mission',mission:'crate',x:PIER.x+260,y:MY,label:'מטען לאי'},
   {id:'coins',type:'mission',mission:'coins',x:(R(10)+R(11))/2,y:R(11)+60,label:'ציד מטבעות'},
+  {id:'fashion',type:'store',store:'fashion',x:(R(6)+R(7))/2,y:R(5)+60,label:'אופנה ברחוב'},
+  {id:'garage',type:'store',store:'garage',x:(R(2)+R(3))/2,y:R(8)+60,label:'מוסך טורבו'},
+  {id:'gadget',type:'store',store:'gadget',x:(R(8)+R(9))/2,y:R(9)+60,label:"גאדג'ט סיטי"},
+  {id:'courier',type:'mission',mission:'courier',x:(R(2)+R(3))/2,y:R(11)+60,label:'שליחויות מהירות',long:true},
+  {id:'tour',type:'mission',mission:'tour',x:(R(13)+R(14))/2,y:R(5)+60,label:'סיורים מודרכים',long:true},
+  {id:'rescue',type:'mission',mission:'rescue',x:Math.round(shoreAt(MY+420))-170,y:MY+420,label:'משמר החוף',long:true},
+  {id:'treasure',type:'mission',mission:'treasure',x:(R(1)+R(2))/2,y:R(1)+60,label:'המטמון של הקפטן',long:true},
   {id:'race0',type:'race',race:0,x:R(5)-210,y:R(5)+60,label:'מרוץ מרכז העיר'},
   {id:'race1',type:'race',race:1,x:R(1)-210,y:R(10)+60,label:'מרוץ התעשייה'},
   {id:'race2',type:'race',race:2,x:PIER.x+PIER.w-50,y:MY,label:'מרוץ הסירות'},
 ];
 MARKERS.forEach(m=>m.armed=true);
-const MCOL={mission:'#ffc53d',race:'#ff5d73',shop:'#3ddc84',boat:'#4cc9f0'};
+const MCOL={mission:'#ffc53d',race:'#ff5d73',shop:'#3ddc84',boat:'#4cc9f0',store:'#c77dff'};
 
 const RACES=[
   {name:'מרוץ מרכז העיר',kind:'car',start:{x:R(5)-80,y:R(5),a:0},nodes:[[9,5],[9,8],[7,8],[7,11],[3,11],[3,6],[5,6],[5,5]],prize:[800,400,150]},
@@ -424,10 +473,10 @@ const keys=new Set();
 addEventListener('keydown',e=>{
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();
   if(!started)return;
-  if(e.code==='Escape'){if(mapOpen)toggleMap(false);else if(!$('panel').hidden)closePanel();return;}
+  if(e.code==='Escape'){if(mapOpen)toggleMap(false);else if(storeOpen)closeStore();else if(!$('panel').hidden)closePanel();return;}
   if(e.repeat){keys.add(e.code);return;}
   if(e.code==='KeyM'){toggleMap();return;}
-  if(!$('panel').hidden||mapOpen)return;
+  if(!$('panel').hidden||mapOpen||storeOpen)return;
   if(e.code==='KeyE'||e.code==='Enter')action();
   if(e.code==='KeyX')cancelActivity();
   keys.add(e.code);
@@ -445,6 +494,8 @@ stick.addEventListener('pointerup',joyEnd);stick.addEventListener('pointercancel
 $('act').addEventListener('pointerdown',e=>{e.preventDefault();if(!paused)action();});
 $('hb').addEventListener('pointerdown',e=>{e.preventDefault();joy.hb=true;});
 $('hb').addEventListener('pointerup',()=>joy.hb=false);$('hb').addEventListener('pointercancel',()=>joy.hb=false);
+$('nos').addEventListener('pointerdown',e=>{e.preventDefault();joy.nitro=true;});
+$('nos').addEventListener('pointerup',()=>joy.nitro=false);$('nos').addEventListener('pointercancel',()=>joy.nitro=false);
 $('mapbtn').addEventListener('click',()=>{if(started)toggleMap();});
 $('mapclose').addEventListener('click',()=>toggleMap(false));
 $('objx').addEventListener('click',cancelActivity);
@@ -476,7 +527,7 @@ function closePanel(){$('panel').hidden=true;paused=!started||mapOpen;}
 function nearestVehicle(){
   let best=null,bd=1e9;
   for(const c of cars){if(c.police||c.racer)continue;const d=hyp(c.x-player.x,c.y-player.y);if(d<60&&d<bd){bd=d;best=c;}}
-  for(const b of boats){if(b.racer)continue;const d=hyp(b.x-player.x,b.y-player.y);if(d<BT[b.type].len*.6+40&&d<bd){bd=d;best=b;}}
+  for(const b of boats){if(b.racer)continue;const d=hyp(b.x-player.x,b.y-player.y);if(d<BT[b.type].len*.6+55&&d<bd){bd=d;best=b;}}
   return best;
 }
 function crime(name){
@@ -521,8 +572,16 @@ function cancelActivity(){
 }
 
 /* ================= physics ================= */
+let nitroCharge=1,nitroT=0;
+function carStats(c){
+  const T=VT[c.type];if(!c.owned)return T;
+  const I=save.items,e=(I.engine1?1:0)+(I.engine2?1:0)+(I.engine3?1:0),o=Object.assign({},T);
+  o.max*=1+.09*e;o.acc*=1+.15*e;if(I.tires){o.grip*=1.25;o.turn*=1.12;}
+  if(nitroT>0){o.max+=3.4;o.acc+=.32;}
+  return o;
+}
 function drivePlayerCar(c,inp,dt){
-  const T=VT[c.type];
+  const T=carStats(c);
   const ca=Math.cos(c.a),sa=Math.sin(c.a);
   let fwd=c.vx*ca+c.vy*sa,lat=-c.vx*sa+c.vy*ca;
   let thr=0,steer=0;
@@ -556,7 +615,7 @@ function drivePlayerCar(c,inp,dt){
   }else c.lastW=null;
 }
 function drivePlayerBoat(b,inp,dt){
-  const T=BT[b.type];let thr=0,steer=0;
+  const T0=BT[b.type],T=b.owned&&save.items.boatturbo?Object.assign({},T0,{max:T0.max*1.22,acc:T0.acc*1.35}):T0;let thr=0,steer=0;
   if(inp.joy){const m=Math.min(1,hyp(inp.x,inp.y)),df=angDiff(b.a,Math.atan2(inp.y,inp.x));thr=m*(Math.abs(df)<2?1:.3);steer=clamp(df*2,-1,1);}
   else{thr=-inp.y;steer=inp.x;}
   const sp=hyp(b.vx,b.vy);
@@ -565,7 +624,7 @@ function drivePlayerBoat(b,inp,dt){
   const fw=b.vx*Math.cos(b.a)+b.vy*Math.sin(b.a);
   b.vx+=(Math.cos(b.a)*fw-b.vx)*.045*dt;b.vy+=(Math.sin(b.a)*fw-b.vy)*.045*dt;
   b.vx*=Math.pow(.987,dt);b.vy*=Math.pow(.987,dt);
-  const s2=hyp(b.vx,b.vy);if(s2>T.max){b.vx*=T.max/s2;b.vy*=T.max/s2;}
+  const s2=hyp(b.vx,b.vy);if(s2>T.max+.05){b.vx*=T.max/s2;b.vy*=T.max/s2;}
   moveBoat(b,dt);
 }
 function moveBoat(b,dt){
@@ -687,6 +746,10 @@ const MISSIONS={
   pizza:{title:'משלוח פיצה',brief:'הפיצה יוצאת עכשיו מהתנור! מסרו אותה לבית המסומן לפני שהיא מתקררת. אפשר ללכת ברגל, אבל ברכב הרבה יותר מהר.',reward:'120 ₪ + בונוס זמן'},
   taxi:{title:'נהג מונית',brief:'אספו שלושה נוסעים והורידו כל אחד ביעד שלו. צריך להיות ברכב ולעצור לגמרי ליד הנוסע.',reward:'כ־150 ₪ לנסיעה'},
   crate:{title:'מטען לאי',brief:'סירה של המרינה מחכה לכם ליד הרציף. הובילו ארגז ציוד לרציף של אי הדקלים.',reward:'400 ₪'},
+  courier:{title:'יום של שליח',len:'7 שלבים',reward:'1,100 ₪',brief:'מעמיסים חמש חבילות במחסן ומחלקים אותן ברחבי העיר: שכונות, מרכז העיר, הגבעה והחוף. בסוף חוזרים למחסן לקבל את התשלום. צריך רכב.',steps:courierSteps},
+  tour:{title:'הסיור הגדול',len:'10 שלבים',reward:'1,700 ₪',brief:'תיירים מהמלון רוצים לראות את כל העיר: הפארק המרכזי, גורדי השחקים, אזור התעשייה והמרינה. אחר כך שייט לאי הדקלים, טיפוס למגדלור וחזרה למלון. נוסעים ברכב ובסירה.',steps:tourSteps},
+  rescue:{title:'משמר החוף',len:'7 שלבים',reward:'1,200 ₪',brief:'ארבעה שחיינים נסחפו לים הפתוח. בסירת ההצלה יש מקום לשניים בכל פעם: מחלצים שניים, מביאים אותם לחוף, ויוצאים שוב לשניים הנותרים.',steps:rescueSteps},
+  treasure:{title:'המטמון של הקפטן',len:'7 רמזים',reward:'2,600 ₪',brief:'מפה ישנה של קפטן מוביל לשבעה רמזים ברחבי העיר והים. כל רמז מגלה את המקום הבא, ובסוף מחכה תיבת אוצר.',steps:treasureSteps},
   coins:{title:'ציד מטבעות',brief:'12 מטבעות זהב פוזרו ברחובות העיר. אספו כמה שיותר תוך 4 דקות.',reward:'40 ₪ למטבע + 300 ₪ על כולם'},
 };
 function randomSidewalk(fx,fy,minD,maxD,okD){
@@ -698,10 +761,87 @@ function randomSidewalk(fx,fy,minD,maxD,okD){
   }
   return{x:START.x,y:START.y};
 }
+const NEEDTXT={car:'צריך רכב',boat:'צריך סירה',foot:'צריך לרדת ולהמשיך ברגל'};
+const PIER_BOAT={x:PIER.x+PIER.w-30,y:PIER.y+PIER.h+52};
+function lot(i,j){return{x:(R(i)+R(i+1))/2,y:R(j)+60};}
+function courierSteps(m){
+  const st=[{t:'היכנסו לרכב ועצרו ליד המחסן כדי להעמיס',x:m.x,y:m.y-30,need:'car',r:80,msg:'החבילות הועמסו!'}];
+  let px=m.x,py=m.y;
+  for(const d of[['res'],['downtown'],['hills'],['coast'],['res']]){const p=randomSidewalk(px,py,900,2800,d);st.push({t:'מסרו חבילה '+st.length+' מתוך 5',x:p.x,y:p.y,need:'car',icon:'box',pay:120,msg:'החבילה נמסרה'});px=p.x;py=p.y;}
+  st.push({t:'חזרו למחסן לקבל את התשלום',x:m.x,y:m.y-30,need:'car',r:80});
+  return{steps:st,final:500,finalMsg:'יום עבודה מוצלח!'};
+}
+function tourSteps(m){
+  const park={x:(R(7)+R(8))/2,y:(R(7)+R(8))/2-86};
+  return{steps:[
+    {t:'היכנסו לרכב ואספו את התיירים מהמלון',x:m.x,y:m.y-26,need:'car',r:80,icon:'group',msg:'התיירים עלו!'},
+    {t:'הסיעו את התיירים לפארק המרכזי',x:park.x,y:park.y,need:'car',r:90,pay:60,msg:'"איזו מזרקה יפה!"'},
+    {t:'הראו להם את גורדי השחקים של מרכז העיר',...lot(8,6),need:'car',pay:60,msg:'"וואו, כמה גבוה!"'},
+    {t:'סעו לאזור התעשייה לראות את המכולות',...lot(1,13),need:'car',pay:60,msg:'"כמה צבעים!"'},
+    {t:'סעו למרינה',x:PIER.x+60,y:MY,need:'any',r:90,msg:'הגעתם למרינה'},
+    {t:'עלו עם התיירים על הסירה הכתומה',x:PIER_BOAT.x,y:PIER_BOAT.y,need:'board'},
+    {t:'שוטו לרציף של אי הדקלים',x:IDOCK.x-50,y:IDOCK.y+IDOCK.h/2,need:'boat',r:130,pay:80,msg:'הגעתם לאי!'},
+    {t:'רדו מהסירה ועלו ברגל למגדלור',x:ISL.x+258,y:ISL.y-92,need:'foot',r:60,pay:80,msg:'"איזה נוף!"'},
+    {t:'חזרו בסירה לרציף של המרינה',x:PIER.x+330,y:PIER.y-60,need:'boat',r:120,msg:'חזרתם ליבשה'},
+    {t:'הסיעו את התיירים חזרה למלון',x:m.x,y:m.y-26,need:'car',r:80},
+  ],final:1300,finalMsg:'התיירים מרוצים מאוד!'};
+}
+function rescueSteps(m){
+  const beach={x:Math.round(shoreAt(m.y))+52,y:m.y},sw=[];
+  for(const[x,y]of[[9900,2600],[10500,900],[10300,6200],[11300,5000]]){let k=0,px=x,py=y;while(islandF(px,py,1.4)<0&&k++<20){px+=120;}sw.push({x:px+(rnd()-.5)*300,y:py+(rnd()-.5)*300});}
+  return{give:beach,steps:[
+    {t:'עלו על סירת ההצלה',x:beach.x,y:beach.y,need:'board'},
+    {t:'חלצו את השחיין הראשון',...sw[0],need:'boat',r:90,icon:'swimmer',msg:'שחיין 1 בסירה'},
+    {t:'חלצו את השחיין השני',...sw[1],need:'boat',r:90,icon:'swimmer',msg:'שחיין 2 בסירה'},
+    {t:'החזירו את השחיינים לחוף',...beach,need:'boat',r:120,pay:300,msg:'שני שחיינים בחוף מבטחים'},
+    {t:'צאו שוב: חלצו את השחיין השלישי',...sw[2],need:'boat',r:90,icon:'swimmer',msg:'שחיין 3 בסירה'},
+    {t:'חלצו את השחיין הרביעי',...sw[3],need:'boat',r:90,icon:'swimmer',msg:'שחיין 4 בסירה'},
+    {t:'החזירו את השחיינים לחוף',...beach,need:'boat',r:120},
+  ],final:900,finalMsg:'כל השחיינים ניצלו!'};
+}
+function treasureSteps(m){
+  return{steps:[
+    {t:'רמז 1: לכו למקום שבו המים קופצים באמצע העיר',x:(R(7)+R(8))/2,y:(R(7)+R(8))/2-86,need:'any',r:75,icon:'clue',msg:'מצאתם פתק!'},
+    {t:'רמז 2: איפה שהגל פוגש את החול, בין המטריות',x:Math.round(shoreAt(R(11)))-150,y:R(11),need:'any',r:80,icon:'clue',msg:'עוד פתק בחול!'},
+    {t:'רמז 3: איפה ששוטרים מתחילים את היום',x:STATION.x,y:STATION.y,need:'any',r:70,icon:'clue',msg:'הפתק היה מתחת לספסל'},
+    {t:'רמז 4: בין המכולות הצבעוניות',...lot(3,13),need:'any',r:75,icon:'clue',msg:'הפתק היה תקוע במכולה'},
+    {t:'רמז 5: בקצה הרציף הארוך בעיר',x:PIER.x+PIER.w-60,y:MY,need:'any',r:70,icon:'clue',msg:'"קחו סירה ושוטו לאי"'},
+    {t:'עלו על הסירה הכתומה שמחכה בקצה הרציף',x:PIER_BOAT.x,y:PIER_BOAT.y,need:'board'},
+    {t:'רמז 6: למרגלות המגדלור באי',x:ISL.x+258,y:ISL.y-92,need:'foot',r:60,icon:'clue',msg:'"חפשו בפינה הדרומית"'},
+    {t:'רמז 7: התיבה קבורה בדרום־מזרח האי',x:ISL.x+290,y:ISL.y+230,need:'foot',r:55,icon:'chest'},
+  ],final:2600,finalMsg:'מצאתם את האוצר!'};
+}
+function giveBoat(at){
+  const m=mission;if(m.boat&&boats.includes(m.boat)&&hyp(m.boat.x-player.x,m.boat.y-player.y)<2500)return;
+  m.boat=mkBoat('speed',at.x,at.y,0,'#ff9f1c',{owned:true,keep:true});boats.push(m.boat);
+}
+function nextStep(){
+  const m=mission;m.idx++;const s=m.steps[m.idx];
+  if(!s){completeMission(m.final,m.finalMsg);return;}
+  if(s.need==='board'){giveBoat(m.give||s);m.target=m.boat;m.timer=m.max=120*60;}
+  else{m.target=s;const d=hyp(s.x-player.x,s.y-player.y);m.timer=m.max=Math.round(d/(s.need==='foot'?2.3:s.need==='any'?2.6:3.3))+60*60;}
+  m.text=s.t;
+}
+function updateChain(m){
+  const s=m.steps[m.idx];if(!s)return;
+  if(s.need==='board'){m.target=m.boat;if(player.veh===m.boat)arriveStep(s);return;}
+  const ok=s.need==='any'||player.mode===s.need;
+  m.text=ok?s.t:s.t+' ('+NEEDTXT[s.need]+')';
+  if(!ok)return;
+  const v=player.veh,slow=!v||Math.abs(v.spd||0)<(s.need==='boat'?3.2:1.6);
+  if(hyp(player.x-s.x,player.y-s.y)<(s.r||70)&&slow)arriveStep(s);
+}
+function arriveStep(s){
+  if(s.pay)addMoney(s.pay);
+  if(s.msg)toast(s.msg,s.pay?'+'+s.pay+' ₪':'שלב '+(mission.idx+1)+' מתוך '+mission.steps.length,1500);
+  if(s.icon)burst(s.x,s.y,14);
+  nextStep();
+}
 function startMission(type,m){
   const T=MISSIONS[type];
   mission={type,title:T.title,stage:'go',timer:0,text:'',target:null};
-  if(type==='pizza'){
+  if(T.steps){const c=T.steps(m);Object.assign(mission,{type:'chain',kind:type,steps:c.steps,final:c.final,finalMsg:c.finalMsg,give:c.give,idx:-1});nextStep();}
+  else if(type==='pizza'){
     mission.target=randomSidewalk(m.x,m.y,1300,2800,['res','hills','coast']);
     mission.timer=mission.max=Math.round(hyp(mission.target.x-m.x,mission.target.y-m.y)/4.2*1.25)+600;
     mission.text='מסרו את הפיצה לבית המסומן';
@@ -737,7 +877,8 @@ function updateMission(dt){
   m.timer-=dt;
   if(m.timer<=0){failMission(m.type==='coins'?'נגמר הזמן!':'נגמר הזמן, המשימה נכשלה');if(m.type==='coins'&&m.got>0){}return;}
   const v=player.veh,px=player.x,py=player.y,slow=!v||Math.abs(v.spd||0)<1.2;
-  if(m.type==='pizza'){if(hyp(px-m.target.x,py-m.target.y)<60&&slow)completeMission(120+Math.floor(m.timer/60)*3,'הפיצה נמסרה חמה!');}
+  if(m.type==='chain')updateChain(m);
+  else if(m.type==='pizza'){if(hyp(px-m.target.x,py-m.target.y)<60&&slow)completeMission(120+Math.floor(m.timer/60)*3,'הפיצה נמסרה חמה!');}
   else if(m.type==='taxi'){
     if(m.stage==='pickup'){
       m.text=player.mode==='car'?'אספו את הנוסע שמחכה ברחוב':'היכנסו לרכב כדי לאסוף את הנוסע';
@@ -756,7 +897,7 @@ function updateMission(dt){
     else if(player.veh===m.boat&&hyp(m.boat.x-m.target.x,m.boat.y-m.target.y)<130)completeMission(400,'המטען הגיע לאי!');
     else if(player.veh!==m.boat){m.stage='board';m.target=m.boat;m.text='חזרו לסירה הכתומה';}
   }else if(m.type==='coins'){
-    for(let k=m.coins.length-1;k>=0;k--){const c=m.coins[k];if(hyp(px-c.x,py-c.y)<46){m.coins.splice(k,1);m.got++;addMoney(40);for(let q=0;q<10;q++)parts.push({x:c.x,y:c.y,vx:(rnd()-.5)*4,vy:(rnd()-.5)*4,life:30,max:30,r:3,grow:0,c:'255,214,10',a:1});}}
+    for(let k=m.coins.length-1;k>=0;k--){const c=m.coins[k];if(hyp(px-c.x,py-c.y)<(save.items.magnet?130:46)){m.coins.splice(k,1);m.got++;addMoney(40);for(let q=0;q<10;q++)parts.push({x:c.x,y:c.y,vx:(rnd()-.5)*4,vy:(rnd()-.5)*4,life:30,max:30,r:3,grow:0,c:'255,214,10',a:1});}}
     if(!m.coins.length){completeMission(300,'כל המטבעות נאספו!');return;}
     let best=null,bd=1e9;for(const c of m.coins){const d=hyp(c.x-px,c.y-py);if(d<bd){bd=d;best=c;}}m.target=best;
   }
@@ -810,7 +951,7 @@ function updateRace(dt){
     r.cp++;burst(cp.x,cp.y,8);
     if(r.cp>=r.cps.length){
       r.place=r.finished.length+1;r.done=true;r.endT=260;
-      const prize=r.rd.prize[r.place-1]||0;addMoney(prize);
+      const prize=Math.round((r.rd.prize[r.place-1]||0)*(save.items.vip?1.5:1));addMoney(prize);
       const prev=save.best[r.idx];if(r.place===1&&(!prev||r.t<prev))save.best[r.idx]=Math.round(r.t);
       persist();
       toast(r.place===1?'ניצחתם במרוץ!':'סיימתם במקום '+r.place,(prize?'+'+prize+' ₪  ·  ':'')+'זמן '+fmtTime(r.t),2600);
@@ -829,6 +970,9 @@ function burst(x,y,n=40){const cols=['255,93,115','255,197,61','61,220,132','76,
 
 /* ================= markers ================= */
 function openMarker(m){
+  if(m.type==='store'){openStore(m.store);return;}
+  if(m.type==='shop'){openStore('dealer');return;}
+  if(m.type==='boat'){openStore('marina');return;}
   if(m.type==='shop'){
     const list=['sedan','van','taxi','sports'];
     openPanel('סוכנות רכב','קונים רכב חוקי','רכב שקניתם הוא שלכם. נוהגים בו בלי שהמשטרה תתעניין בכם.',[['בארנק:',fmtMoney(save.money)]],
@@ -838,7 +982,7 @@ function openMarker(m){
       ['jet','speed'].map(t=>({label:BT[t].name,sub:BT[t].price+' ₪',cls:'buy',disabled:save.money<BT[t].price,fn:()=>rentBoat(t)})).concat([{label:'לא עכשיו',cls:'alt'}]));
   }else if(m.type==='mission'){
     const T=MISSIONS[m.mission];
-    openPanel('משימה',T.title,T.brief,[['פרס:',T.reward]],[{label:'קבלו את המשימה',fn:()=>startMission(m.mission,m)},{label:'לא עכשיו',cls:'alt'}]);
+    openPanel(T.steps?'משימה ארוכה':'משימה',T.title,T.brief,T.steps?[['פרס:',T.reward],['אורך:',T.len]]:[['פרס:',T.reward]],[{label:'קבלו את המשימה',fn:()=>startMission(m.mission,m)},{label:'לא עכשיו',cls:'alt'}]);
   }else if(m.type==='race'){
     const rd=RACES[m.race],b=save.best[m.race];
     openPanel(rd.kind==='car'?'מרוץ מכוניות':'מרוץ סירות',rd.name,`ארבעה מתחרים, ${rd.cps.length} נקודות ביקורת. עברו בכל הטבעות לפי הסדר. מקבלים ${rd.kind==='car'?'מכונית מרוץ':'סירת מרוץ'} ששלכם גם אחרי המרוץ.`,
@@ -846,6 +990,108 @@ function openMarker(m){
       [{label:'התחילו את המרוץ',fn:()=>startRace(m.race)},{label:'לא עכשיו',cls:'alt'}]);
   }
 }
+const SVG=(inner)=>'<svg viewBox="0 0 100 64" aria-hidden="true">'+inner+'</svg>';
+const ICON={
+  shirt:c=>SVG(`<path d="M37 8 L20 15 L10 30 L23 36 L28 29 L28 58 L72 58 L72 29 L77 36 L90 30 L80 15 L63 8 Q50 19 37 8Z" fill="${c}" stroke="#16202c" stroke-width="3" stroke-linejoin="round"/>${c==='#ff5400'?'<path d="M36 58 Q40 40 46 48 Q50 30 55 46 Q60 38 64 58Z" fill="#ffd60a"/>':''}`),
+  hat:c=>c?SVG(`<path d="M27 44 Q29 14 52 14 Q73 14 73 44Z" fill="${c}" stroke="#16202c" stroke-width="3"/><path d="M71 42 L94 46 Q82 54 66 48Z" fill="${c}" stroke="#16202c" stroke-width="3" stroke-linejoin="round"/><circle cx="50" cy="15" r="3" fill="#16202c"/>`):SVG('<circle cx="50" cy="32" r="22" fill="none" stroke="#16202c" stroke-width="4"/><path d="M34 48 L66 16" stroke="#e5484d" stroke-width="5"/>'),
+  glasses:()=>SVG('<path d="M14 28 H86" stroke="#16202c" stroke-width="4"/><rect x="18" y="24" width="26" height="18" rx="8" fill="#16202c"/><rect x="56" y="24" width="26" height="18" rx="8" fill="#16202c"/><path d="M22 28 l8 0" stroke="#7fd3ff" stroke-width="3"/><path d="M60 28 l8 0" stroke="#7fd3ff" stroke-width="3"/>'),
+  engine:c=>SVG(`<path d="M56 4 L26 36 H46 L40 60 L74 24 H54Z" fill="${c}" stroke="#16202c" stroke-width="3" stroke-linejoin="round"/>`),
+  tire:()=>SVG('<circle cx="50" cy="32" r="27" fill="#22262c"/><circle cx="50" cy="32" r="14" fill="#c9ced6"/><circle cx="50" cy="32" r="5" fill="#22262c"/><g stroke="#3a4048" stroke-width="4">'+[0,1,2,3,4,5,6,7].map(k=>{const a=k*Math.PI/4;return`<line x1="${50+Math.cos(a)*19}" y1="${32+Math.sin(a)*19}" x2="${50+Math.cos(a)*26}" y2="${32+Math.sin(a)*26}"/>`;}).join('')+'</g>'),
+  nitro:()=>SVG('<rect x="30" y="12" width="30" height="46" rx="10" fill="#4cc9f0" stroke="#16202c" stroke-width="3"/><rect x="38" y="4" width="14" height="10" rx="3" fill="#16202c"/><text x="45" y="42" font-size="18" font-weight="800" text-anchor="middle" fill="#16202c" font-family="Assistant">NOS</text><path d="M62 30 Q80 22 92 32 Q80 42 62 34Z" fill="#ff8a00"/>'),
+  paint:()=>SVG('<rect x="34" y="20" width="26" height="40" rx="5" fill="#e63946" stroke="#16202c" stroke-width="3"/><rect x="40" y="10" width="14" height="10" fill="#16202c"/><circle cx="72" cy="14" r="5" fill="#ffd60a"/><circle cx="82" cy="24" r="4" fill="#3a86ff"/><circle cx="70" cy="30" r="3.5" fill="#2a9d8f"/>'),
+  skate:()=>SVG('<rect x="12" y="24" width="76" height="14" rx="7" fill="#ff7b00" stroke="#16202c" stroke-width="3"/><circle cx="28" cy="46" r="7" fill="#16202c"/><circle cx="72" cy="46" r="7" fill="#16202c"/><path d="M30 31 H70" stroke="#ffd60a" stroke-width="3" stroke-dasharray="6 5"/>'),
+  scanner:()=>SVG('<rect x="26" y="14" width="48" height="40" rx="8" fill="#1d3557" stroke="#16202c" stroke-width="3"/><circle cx="50" cy="34" r="14" fill="#0b1d33"/><path d="M50 34 L62 26" stroke="#3ddc84" stroke-width="3"/><circle cx="56" cy="40" r="3" fill="#ff2d2d"/><rect x="34" y="6" width="12" height="8" fill="#ff2d2d"/><rect x="54" y="6" width="12" height="8" fill="#2d5bff"/>'),
+  magnet:()=>SVG('<path d="M28 10 V36 A22 22 0 0 0 72 36 V10 H58 V36 A8 8 0 0 1 42 36 V10Z" fill="#e5484d" stroke="#16202c" stroke-width="3"/><rect x="28" y="10" width="14" height="9" fill="#d6dde3"/><rect x="58" y="10" width="14" height="9" fill="#d6dde3"/><circle cx="84" cy="44" r="7" fill="#ffd60a" stroke="#b8860b" stroke-width="2"/>'),
+  vip:()=>SVG('<path d="M12 16 H88 V26 A6 6 0 0 0 88 38 V48 H12 V38 A6 6 0 0 0 12 26Z" fill="#ffd60a" stroke="#16202c" stroke-width="3"/><text x="50" y="40" font-size="20" font-weight="800" text-anchor="middle" fill="#16202c" font-family="Assistant">VIP</text>'),
+  drone:()=>SVG('<rect x="36" y="24" width="28" height="16" rx="6" fill="#3a4048"/><g stroke="#3a4048" stroke-width="4"><line x1="38" y1="26" x2="20" y2="14"/><line x1="62" y1="26" x2="80" y2="14"/><line x1="38" y1="38" x2="20" y2="50"/><line x1="62" y1="38" x2="80" y2="50"/></g><g fill="none" stroke="#4cc9f0" stroke-width="3">'+[[20,14],[80,14],[20,50],[80,50]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="13" ry="4"/>`).join('')+'</g><circle cx="50" cy="40" r="4" fill="#ff2d2d"/>'),
+  car:c=>SVG(`<rect x="10" y="20" width="80" height="30" rx="10" fill="${c}" stroke="#16202c" stroke-width="3"/><rect x="58" y="24" width="12" height="22" rx="3" fill="#9fd3f5"/><rect x="22" y="24" width="10" height="22" rx="3" fill="#9fd3f5"/><rect x="18" y="14" width="14" height="6" fill="#16202c"/><rect x="66" y="14" width="14" height="6" fill="#16202c"/><rect x="18" y="50" width="14" height="6" fill="#16202c"/><rect x="66" y="50" width="14" height="6" fill="#16202c"/>`),
+  boat:c=>SVG(`<path d="M92 32 Q70 12 14 16 L10 32 L14 48 Q70 52 92 32Z" fill="#fff" stroke="${c}" stroke-width="4"/><rect x="34" y="24" width="22" height="16" rx="3" fill="${c}"/><rect x="4" y="27" width="8" height="10" fill="#16202c"/>`),
+  turbo:()=>SVG('<path d="M92 34 Q70 16 18 20 L14 34 L18 48 Q70 52 92 34Z" fill="#fff" stroke="#0096c7" stroke-width="4"/><path d="M14 30 L-2 22 M14 38 L-2 46 M12 34 H-4" stroke="#ff8a00" stroke-width="4"/><path d="M58 18 L44 36 H54 L48 52 L66 30 H56Z" fill="#ffd60a" stroke="#16202c" stroke-width="2"/>'),
+};
+const STORES={
+  fashion:{name:'אופנה ברחוב',tag:'חולצות, כובעים ומשקפי שמש. מה שקונים נשאר שלכם ואפשר להחליף מתי שרוצים.',c:'#7b2cbf',items:[
+    {id:'shirt_sun',name:'חולצה צהובה',desc:'החולצה שאיתה התחלתם.',price:0,icon:'shirt',col:'#ffc53d',slot:'shirt'},
+    {id:'shirt_blue',name:'חולצה כחולה',desc:'קלאסית ונוחה.',price:60,icon:'shirt',col:'#3a86ff',slot:'shirt'},
+    {id:'shirt_green',name:'חולצה ירוקה',desc:'בצבע של הפארק המרכזי.',price:60,icon:'shirt',col:'#2a9d8f',slot:'shirt'},
+    {id:'shirt_black',name:'חולצה שחורה',desc:'למי שאוהב לנהוג בלילה.',price:90,icon:'shirt',col:'#222831',slot:'shirt'},
+    {id:'shirt_flame',name:'חולצת להבות',desc:'רואים אותה מקצה הרחוב.',price:200,icon:'shirt',col:'#ff5400',slot:'shirt'},
+    {id:'shirt_gold',name:'חולצת זהב',desc:'רק לאלופי המירוצים.',price:600,icon:'shirt',col:'#ffd60a',slot:'shirt'},
+    {id:'hat_red',name:'כובע אדום',desc:'הכובע המקורי.',price:0,icon:'hat',col:'#e63946',slot:'hat'},
+    {id:'hat_navy',name:'כובע כחול',desc:'כובע מצחייה כחול כהה.',price:50,icon:'hat',col:'#1d3557',slot:'hat'},
+    {id:'hat_green',name:'כובע ירוק',desc:'מתאים לחולצה הירוקה.',price:50,icon:'hat',col:'#2b9348',slot:'hat'},
+    {id:'hat_gold',name:'כובע זהב',desc:'נוצץ בשמש.',price:350,icon:'hat',col:'#ffd60a',slot:'hat'},
+    {id:'hat_none',name:'בלי כובע',desc:'לפעמים פחות זה יותר.',price:0,icon:'hat',col:null,slot:'hat'},
+    {id:'glasses',name:'משקפי שמש',desc:'סטייל של חוף. לובשים ומורידים.',price:120,icon:'glasses',slot:'glasses',col:true},
+  ]},
+  garage:{name:'מוסך טורבו',tag:'שדרוגים לכל הרכבים שלכם: מנוע, צמיגים, ניטרו וצבע.',note:'השדרוגים חלים על רכבים שקניתם או קיבלתם, לא על רכבים לקוחים.',c:'#d62828',items:[
+    {id:'engine1',name:'מנוע שלב 1',desc:'מהירות ותאוצה גבוהות יותר.',price:600,icon:'engine',col:'#ffd60a',once:true},
+    {id:'engine2',name:'מנוע שלב 2',desc:'עוד קפיצה במהירות.',price:1500,icon:'engine',col:'#ff8a00',once:true,req:'engine1'},
+    {id:'engine3',name:'מנוע שלב 3',desc:'המנוע הכי חזק בעיר.',price:3000,icon:'engine',col:'#e5484d',once:true,req:'engine2'},
+    {id:'tires',name:'צמיגי מרוץ',desc:'אחיזה טובה יותר בפניות.',price:700,icon:'tire',once:true},
+    {id:'nitro',name:'ניטרו',desc:'דחיפה של מהירות במקש N. נטען מחדש תוך 8 שניות.',price:1200,icon:'nitro',once:true},
+    {id:'paint',name:'צביעה מחדש',desc:'צבע חדש לרכב שהגעתם איתו.',price:150,icon:'paint',paint:true},
+  ]},
+  gadget:{name:"גאדג'ט סיטי",tag:'צעצועים חכמים שעוזרים במשימות, במירוצים ובבריחה.',c:'#0077b6',items:[
+    {id:'skate',name:'סקייטבורד',desc:'הליכה מהירה פי 1.5 ברגל.',price:400,icon:'skate',once:true},
+    {id:'scanner',name:'סורק משטרה',desc:'כל הניידות על המפה, והמשטרה מוותרת מהר יותר.',price:500,icon:'scanner',once:true},
+    {id:'magnet',name:'מגנט מטבעות',desc:'אוסף מטבעות מרחוק בציד המטבעות.',price:300,icon:'magnet',once:true},
+    {id:'vip',name:'כרטיס VIP',desc:'פרסי מירוצים גדולים ב־50%.',price:800,icon:'vip',once:true},
+    {id:'drone',name:'רחפן צילום',desc:'מבט רחב יותר על העיר מלמעלה.',price:900,icon:'drone',once:true},
+  ]},
+  dealer:{name:'סוכנות רכב',tag:'רכב שקניתם הוא שלכם. נוהגים בו בלי שהמשטרה תתעניין בכם.',note:'הרכב יחכה לכם ברחוב ליד הסוכנות.',c:'#2b9a5c',items:['sedan','van','taxi','sports'].map(t=>({id:'car_'+t,name:VT[t].name,desc:{sedan:'נוחה ואמינה.',van:'גדול ויציב, קצת איטי.',taxi:'צהובה עם שלט, מושלמת למשימות מונית.',sports:'הכי מהירה בסוכנות.'}[t],price:VT[t].price,icon:'car',col:t==='taxi'?'#ffd60a':t==='sports'?'#e63946':t==='van'?'#f1faee':'#3a86ff',car:t}))},
+  marina:{name:'המרינה',tag:'השכרת סירות ושדרוגים לסירות שלכם.',note:'סירה שכורה מחכה ליד הרציף.',c:'#0096c7',items:[
+    {id:'boat_jet',name:BT.jet.name,desc:'קטן, זריז ומהיר.',price:BT.jet.price,icon:'boat',col:'#06d6a0',boat:'jet'},
+    {id:'boat_speed',name:BT.speed.name,desc:'יציבה ונוחה לשייט ארוך.',price:BT.speed.price,icon:'boat',col:'#e63946',boat:'speed'},
+    {id:'boatturbo',name:'טורבו לסירות',desc:'כל הסירות שלכם מהירות יותר.',price:900,icon:'turbo',once:true},
+  ]},
+};
+let storeOpen=null;
+const ownsItem=it=>it.price===0||!!save.items[it.id];
+function itemState(it){
+  if(it.slot){
+    const on=it.slot==='glasses'?save.outfit.glasses:save.outfit[it.slot]===it.col;
+    if(!ownsItem(it))return{label:it.price+' ₪ · קנייה',dis:save.money<it.price};
+    if(it.slot==='glasses')return on?{label:'להוריד',cls:'on'}:{label:'ללבוש',cls:'own'};
+    return on?{label:'לובשים עכשיו',cls:'on',dis:true}:{label:'ללבוש',cls:'own'};
+  }
+  if(it.once){
+    if(save.items[it.id])return{label:'נקנה ✓',cls:'own',dis:true};
+    if(it.req&&!save.items[it.req])return{label:'קודם: '+STORES.garage.items.find(x=>x.id===it.req).name,dis:true};
+    return{label:it.price.toLocaleString('he-IL')+' ₪ · קנייה',dis:save.money<it.price};
+  }
+  if(it.paint){const ok=player.mode==='car'&&player.veh.owned;return ok?{label:it.price+' ₪ · צביעה',dis:save.money<it.price}:{label:'צריך להגיע ברכב שלכם',dis:true};}
+  return{label:it.price.toLocaleString('he-IL')+' ₪ · קנייה',dis:save.money<it.price};
+}
+function useItem(it){
+  if(it.slot){
+    if(!ownsItem(it)){addMoney(-it.price);save.items[it.id]=true;toast('קניתם '+it.name+'!',null,1300);}
+    if(it.slot==='glasses')save.outfit.glasses=!save.outfit.glasses;else save.outfit[it.slot]=it.col;
+    applyOutfit();
+  }else if(it.once){addMoney(-it.price);save.items[it.id]=true;toast('קניתם '+it.name+'!',it.desc,1700);}
+  else if(it.paint){addMoney(-it.price);const c=player.veh,cols=['#e63946','#3a86ff','#2a9d8f','#111827','#ffb703','#8338ec','#ff70a6','#f1faee','#06d6a0'];let col=c.color;while(col===c.color)col=pick(cols);c.color=col;c.c1=shade(col,-.2);c.c2=shade(col,.22);c.c3=shade(col,-.32);toast('צבע חדש!',null,1100);}
+  else if(it.car)buyCar(it.car,MARKERS.find(m=>m.id==='dealer'));
+  else if(it.boat)rentBoat(it.boat);
+  persist();renderStore();
+}
+function applyOutfit(){player.shirt=save.outfit.shirt;player.hat=save.outfit.hat;player.glasses=save.outfit.glasses;}
+function renderStore(){
+  const S=STORES[storeOpen];
+  $('shead').style.background=S.c;$('awn').style.setProperty('--a1',S.c);
+  $('sname').textContent=S.name;$('stag').textContent=S.tag;$('smsg').textContent=S.note||'';$('smoney').textContent=fmtMoney(save.money);
+  const box=$('sitems');const keep=document.activeElement&&document.activeElement.dataset?document.activeElement.dataset.id:null;box.textContent='';
+  for(const it of S.items){
+    const st=itemState(it),el=document.createElement('div');el.className='item';
+    el.innerHTML=ICON[it.icon](it.col);
+    const h=document.createElement('h4');h.textContent=it.name;const p=document.createElement('p');p.textContent=it.desc;
+    const b=document.createElement('button');b.type='button';b.textContent=st.label;b.dataset.id=it.id;if(st.cls)b.className=st.cls;b.disabled=!!st.dis;
+    b.addEventListener('click',()=>useItem(it));
+    el.append(h,p,b);box.appendChild(el);
+  }
+  if(keep){const f=box.querySelector(`[data-id="${keep}"]`);if(f&&!f.disabled)f.focus();else $('sexit').focus();}
+}
+function openStore(id){storeOpen=id;paused=true;keys.clear();renderStore();$('store').hidden=false;$('sitems').scrollTop=0;$('sexit').focus();}
+function closeStore(){storeOpen=null;$('store').hidden=true;paused=!started||mapOpen||!$('panel').hidden;persist();}
+$('sexit').addEventListener('click',closeStore);
 function buyCar(t,m){
   addMoney(-VT[t].price);persist();
   const col=t==='taxi'?'#ffd60a':pick(['#e63946','#3a86ff','#2a9d8f','#111827','#ffb703','#8338ec']);
@@ -866,9 +1112,13 @@ function update(dt){
   const inp=locked?{x:0,y:0,joy:false,hb:true}:input();
   if(player.mode==='foot'){
     const m=hyp(inp.x,inp.y);
-    if(m>.1){const sp=(inp.run?4.2:2.8)*Math.min(1,m),vx=inp.x/m*sp*dt,vy=inp.y/m*sp*dt;player.a=Math.atan2(inp.y,inp.x);
+    if(m>.1){const sp=(inp.run?4.2:2.8)*(save.items.skate?1.55:1)*Math.min(1,m),vx=inp.x/m*sp*dt,vy=inp.y/m*sp*dt;player.a=Math.atan2(inp.y,inp.x);
       if(!blockedFoot(player.x+vx,player.y))player.x+=vx;if(!blockedFoot(player.x,player.y+vy))player.y+=vy;player.walk+=dt*.3*(sp/2.8);}
-  }else if(player.mode==='car'){drivePlayerCar(player.veh,inp,dt);player.x=player.veh.x;player.y=player.veh.y;}
+  }else if(player.mode==='car'){
+    if(nitroT>0){nitroT-=dt;const c=player.veh,ca=Math.cos(c.a),sa=Math.sin(c.a);for(let k=0;k<2;k++)parts.push({x:c.x-ca*26+(rnd()-.5)*6,y:c.y-sa*26+(rnd()-.5)*6,vx:-ca*3+(rnd()-.5),vy:-sa*3+(rnd()-.5),life:16,max:16,r:5,grow:-.2,c:pick(['80,200,255','255,160,40','255,255,255']),a:.9});}
+    else if(nitroCharge<1)nitroCharge=Math.min(1,nitroCharge+dt/480);
+    if((K('KeyN')||joy.nitro)&&save.items.nitro&&player.veh.owned&&nitroCharge>=1&&!locked){nitroT=110;nitroCharge=0;}
+    drivePlayerCar(player.veh,inp,dt);player.x=player.veh.x;player.y=player.veh.y;}
   else{drivePlayerBoat(player.veh,inp,dt);player.x=player.veh.x;player.y=player.veh.y;}
 
   for(const c of cars){if(c===player.veh||c.racer)continue;if(c.chase||c.leaving)updatePolice(c,dt);else if(c.ai)updateAICar(c,dt);else{c.spd*=Math.pow(.9,dt);c.brake=false;}}
@@ -890,7 +1140,7 @@ function update(dt){
     const want=[0,1,3,4,5,6][stars];
     spawnCD-=dt;if(chasers.length<want&&spawnCD<=0){spawnChaser();spawnCD=100;}
     const near=chasers.some(c=>hyp(c.x-player.x,c.y-player.y)<800);
-    if(near)calm=0;else{calm+=dt;if(calm>600){stars--;calm=0;if(!stars)toast('המשטרה הפסיקה לחפש אתכם',null,1600);}}
+    if(near)calm=0;else{calm+=dt;if(calm>(save.items.scanner?360:600)){stars--;calm=0;if(!stars)toast('המשטרה הפסיקה לחפש אתכם',null,1600);}}
   }else{for(const c of cars)if(c.chase){c.chase=false;c.leaving=true;}}
   if(bustLock<=0&&stars>0){
     let caught=false;const slow=player.mode==='foot'||(player.mode==='car'&&Math.abs(player.veh.spd)<1.3);
@@ -907,7 +1157,7 @@ function update(dt){
 
   const spd=player.veh?Math.abs(player.veh.spd||0):0;
   const base=clamp(Math.min(VW,VH)/640,.62,1.1)*(player.mode==='foot'?1.18:1);
-  const tz=base*(1-Math.min(.3,spd/32));
+  const tz=base*(1-Math.min(.3,spd/32))*(save.items.drone?.8:1);
   cam.z+=(tz-cam.z)*.04*dt;
   const v=player.veh,lx=v?v.vx*16:0,ly=v?v.vy*16:0;
   cam.x+=(player.x+lx-cam.x)*.09*dt;cam.y+=(player.y+ly-cam.y)*.09*dt;
@@ -1056,6 +1306,7 @@ function drawPerson(p,isPlayer){
   ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(3,4,10,8,0,0,TAU);ctx.fill();
   if(isPlayer){ctx.strokeStyle='#ffc53d';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,18+Math.sin(time*.1)*2,0,TAU);ctx.stroke();}
   ctx.rotate(p.a);
+  if(isPlayer&&save.items.skate){ctx.fillStyle='#ff7b00';rr(-15,-6,30,12,6);ctx.fill();ctx.fillStyle='#16202c';for(const[a,b]of[[-10,-7],[8,-7],[-10,5],[8,5]])ctx.fillRect(a,b,4,2.5);}
   const walk=isPlayer?player.walk:p.t*(p.flee>0?.36:.16),s=p.wait?0:Math.sin(walk)*5;
   ctx.fillStyle=p.pants;ctx.beginPath();ctx.ellipse(s,-4,5,3,0,0,TAU);ctx.ellipse(-s,4,5,3,0,0,TAU);ctx.fill();
   ctx.fillStyle=p.skin;ctx.beginPath();
@@ -1065,6 +1316,7 @@ function drawPerson(p,isPlayer){
   ctx.fillStyle=p.skin;ctx.beginPath();ctx.arc(1,0,5.6,0,TAU);ctx.fill();
   if(p.hat){ctx.fillStyle=p.hat;ctx.beginPath();ctx.arc(0,0,5.9,0,TAU);ctx.fill();ctx.fillRect(3,-3.6,4.5,7.2);}
   else{ctx.fillStyle=p.hair;ctx.beginPath();ctx.arc(0,0,5.9,Math.PI*.5,Math.PI*1.5);ctx.fill();}
+  if(p.glasses){ctx.fillStyle='#111';ctx.fillRect(3.4,-4.6,2.6,9.2);ctx.fillStyle='rgba(120,200,255,.6)';ctx.fillRect(4.6,-4,1,3);}
   ctx.restore();
 }
 function drawCar(c){
@@ -1137,6 +1389,14 @@ function drawBeacon(t){
   ctx.fillStyle='rgba(255,197,61,.28)';ctx.beginPath();ctx.arc(t.x,t.y,34,0,TAU);ctx.fill();
   const y=t.y-58+Math.sin(time*.08)*6;ctx.fillStyle='#ffc53d';ctx.strokeStyle='#16202c';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(t.x-14,y);ctx.lineTo(t.x+14,y);ctx.lineTo(t.x,y+20);ctx.closePath();ctx.fill();ctx.stroke();
 }
+function drawStepIcon(s){
+  const x=s.x,y=s.y,b=Math.sin(time*.06)*2;
+  if(s.icon==='swimmer'){ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,18+((time*.5)%14),0,TAU);ctx.stroke();ctx.fillStyle='#ff6b35';ctx.beginPath();ctx.arc(x,y+b,12,0,TAU);ctx.fill();ctx.fillStyle='#fff';for(let k=0;k<4;k++){ctx.beginPath();ctx.arc(x,y+b,12,k*Math.PI/2,k*Math.PI/2+.35);ctx.lineTo(x,y+b);ctx.fill();}ctx.fillStyle='#2f8fd8';ctx.beginPath();ctx.arc(x,y+b,6,0,TAU);ctx.fill();ctx.fillStyle='#e0ac69';ctx.beginPath();ctx.arc(x,y+b-1,5.5,0,TAU);ctx.fill();ctx.fillStyle='#2b2118';ctx.beginPath();ctx.arc(x,y+b-2,5.5,Math.PI,TAU);ctx.fill();ctx.fillStyle='#e0ac69';ctx.fillRect(x+6,y+b-14+Math.sin(time*.3)*3,3,9);}
+  else if(s.icon==='box'){ctx.fillStyle='rgba(0,0,0,.2)';ctx.fillRect(x-10,y-4,26,14);ctx.fillStyle='#c68642';ctx.fillRect(x-13,y-12+b,26,20);ctx.fillStyle='#a0692f';ctx.fillRect(x-2,y-12+b,4,20);ctx.strokeStyle='#7a4e22';ctx.lineWidth=2;ctx.strokeRect(x-13,y-12+b,26,20);}
+  else if(s.icon==='chest'){ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx.ellipse(x+3,y+10,20,6,0,0,TAU);ctx.fill();ctx.fillStyle='#8b5a2b';rr(x-18,y-12+b,36,24,5);ctx.fill();ctx.fillStyle='#ffd60a';ctx.fillRect(x-18,y-3+b,36,4);ctx.fillRect(x-3,y-6+b,6,9);ctx.strokeStyle='#5b3b20';ctx.lineWidth=2;rr(x-18,y-12+b,36,24,5);ctx.stroke();}
+  else if(s.icon==='clue'){ctx.save();ctx.translate(x,y+b);ctx.rotate(.15);ctx.fillStyle='#f3e2b3';ctx.fillRect(-12,-9,24,18);ctx.fillStyle='#d9c08a';ctx.beginPath();ctx.arc(-12,0,4,0,TAU);ctx.arc(12,0,4,0,TAU);ctx.fill();ctx.strokeStyle='#8b5a2b';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-7,-3);ctx.lineTo(7,-3);ctx.moveTo(-7,2);ctx.lineTo(4,2);ctx.stroke();ctx.strokeStyle='#d62828';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(4,4);ctx.lineTo(8,8);ctx.moveTo(8,4);ctx.lineTo(4,8);ctx.stroke();ctx.restore();}
+  else if(s.icon==='group'){for(const[o,c]of[[-10,'#2a9d8f'],[10,'#e76f51'],[0,'#6a4c93']])drawPerson({x:x+o,y:y+(o?0:-12),a:Math.PI/2,shirt:c,pants:'#2b2d42',skin:'#f1c27d',hair:'#5a3825',hat:o===10?'#fff':null,t:0,wait:true},false);}
+}
 function light(x,y,r,rgb,a){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${rgb},${a})`);g.addColorStop(1,`rgba(${rgb},0)`);ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}
 
 function draw(){
@@ -1150,7 +1410,7 @@ function draw(){
   drawGround(x0,y0,x1,y1);
   ctx.lineCap='round';for(const s of skids){if(!vis(s[0],s[1],10))continue;ctx.strokeStyle=`rgba(25,25,25,${s[4]*.4})`;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(s[0],s[1]);ctx.lineTo(s[2],s[3]);ctx.stroke();}ctx.lineCap='butt';
   for(const m of MARKERS)if(vis(m.x,m.y,120)&&!race)drawMarker(m);
-  for(const p of parts)if(!p.conf&&vis(p.x,p.y,20)){ctx.globalAlpha=p.a*(p.life/p.max);ctx.fillStyle=`rgb(${p.c})`;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,TAU);ctx.fill();}
+  for(const p of parts)if(!p.conf&&vis(p.x,p.y,20)&&p.r>0){ctx.globalAlpha=p.a*(p.life/p.max);ctx.fillStyle=`rgb(${p.c})`;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,TAU);ctx.fill();}
   ctx.globalAlpha=1;
   for(const b of boats)if(vis(b.x,b.y,120))drawBoat(b);
   if(x1>CITY0&&x0<CITY1){const[i0,i1,j0,j1]=visBlocks(x0,y0,x1,y1,0);for(let i=i0;i<=i1;i++)for(let j=j0;j<=j1;j++)for(const c of blocks[i][j].cars)drawCar(c);}
@@ -1190,6 +1450,7 @@ function draw(){
   ctx.globalAlpha=1;
   if(race){for(let k=race.cp+1;k<Math.min(race.cps.length,race.cp+2);k++)drawCheckpoint(race.cps[k],k,'later');if(race.cp<race.cps.length)drawCheckpoint(race.cps[race.cp],race.cp,'next');
     for(const r of race.racers)if(vis(r.x,r.y)){ctx.font='700 13px Assistant, sans-serif';ctx.textAlign='center';ctx.direction='rtl';ctx.lineWidth=3;ctx.strokeStyle='rgba(22,32,44,.85)';ctx.strokeText(r.name,r.x,r.y-30);ctx.fillStyle='#fff';ctx.fillText(r.name,r.x,r.y-30);}}
+  if(mission&&mission.type==='chain')for(let k=mission.idx;k<mission.steps.length;k++){const s=mission.steps[k];if(s.icon&&(k===mission.idx||s.icon==='swimmer')&&vis(s.x,s.y))drawStepIcon(s);}
   if(mission&&mission.target)drawBeacon(mission.target);
   for(const p of peds)if(p.bubble>0&&vis(p.x,p.y))drawBubble(p.x,p.y,p.say);
   if(player.mode!=='foot'){const v=player.veh;ctx.strokeStyle='rgba(255,197,61,.9)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(v.x,v.y,(v.kind==='boat'?BT[v.type].len*.5:30)+8,0,TAU);ctx.stroke();}
@@ -1221,7 +1482,7 @@ function drawRadar(){
   if(!race)for(const m of MARKERS){const[x,y]=edge(m.x,m.y);iconDot(rctx,x,y,7,MCOL[m.type],true);}
   {const[x,y]=edge(STATION.x,STATION.y);iconDot(rctx,x,y,6,'#3b6bff',true);}
   for(const v of cars)if(v.mine&&v!==player.veh){const[x,y]=edge(v.x,v.y);iconDot(rctx,x,y,5,'#3ddc84',true);}
-  for(const v of cars)if(v.chase&&!v.leaving){const[x,y]=P(v.x,v.y);iconDot(rctx,x,y,6,(time/8|0)%2?'#ff2d2d':'#2d5bff');}
+  for(const v of cars)if(v.chase&&!v.leaving||save.items.scanner&&v.police){const[x,y]=save.items.scanner?edge(v.x,v.y):P(v.x,v.y);iconDot(rctx,x,y,6,(time/8|0)%2?'#ff2d2d':'#2d5bff');}
   if(race)for(const r of race.racers){const[x,y]=P(r.x,r.y);iconDot(rctx,x,y,5,r.color,true);}
   if(mission&&mission.type==='coins')for(const k of mission.coins){const[x,y]=edge(k.x,k.y);iconDot(rctx,x,y,4,'#ffd60a',true);}
   const tgt=race?race.cps[Math.min(race.cp,race.cps.length-1)]:mission&&mission.target;
@@ -1256,7 +1517,8 @@ function hud(){
   $('money').textContent=fmtMoney(save.money);
   let st='';for(let i=0;i<5;i++)st+=i<stars?'<b>★</b>':'☆';const se=$('stars');se.innerHTML=st;se.classList.toggle('hot',stars>0&&cars.some(c=>c.chase&&!c.leaving&&hyp(c.x-player.x,c.y-player.y)<800));
   const h=dayT*24,hh=Math.floor(h),mm=Math.floor((h-hh)*60);$('clock').textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
-  const sp=$('speed');if(player.veh){sp.hidden=false;sp.firstChild.nodeValue=String(Math.round(Math.abs(player.veh.kind==='car'?player.veh.spd:player.veh.spd)*16));sp.lastChild.textContent=player.veh.kind==='car'?'קמ"ש':'קשר';}else sp.hidden=true;
+  const sp=$('speed');if(player.veh){sp.hidden=false;sp.firstChild.nodeValue=String(Math.round(Math.abs(player.veh.kind==='car'?player.veh.spd:player.veh.spd)*16));sp.lastChild.textContent=(player.veh.kind==='car'?'קמ"ש':'קשר')+(player.mode==='car'&&save.items.nitro&&player.veh.owned?(nitroT>0?' · ניטרו!':nitroCharge>=1?' · ניטרו מוכן':' · ניטרו '+Math.round(nitroCharge*100)+'%'):'');}else sp.hidden=true;
+  $('nos').hidden=!(touchy&&started&&player.mode==='car'&&save.items.nitro&&player.veh.owned);
   const ob=$('obj');
   if(race){
     ob.hidden=false;$('objt').textContent=race.rd.name;
@@ -1271,6 +1533,7 @@ function hud(){
     add('זמן',fmtTime(Math.max(0,mission.timer)).replace(/\.\d$/,''));
     if(mission.type==='coins')add('נאספו',mission.got+'/12');
     if(mission.type==='taxi')add('נסיעות',mission.fares+'/3');
+    if(mission.type==='chain')add('שלב',(mission.idx+1)+'/'+mission.steps.length);
     if(mission.target)add('מרחק',Math.round(hyp(mission.target.x-player.x,mission.target.y-player.y)/5)+' מ\'');
   }else ob.hidden=true;
   const hint=$('hint');let t='';const key=touchy?'הכפתור הצהוב':'E';
@@ -1293,13 +1556,14 @@ function frame(now){
   if((hudT+=dt)>6){hudT=0;hud();}
   if((radT+=dt)>3){radT=0;drawRadar();}
 }
+applyOutfit();
 function begin(){started=true;paused=false;$('start').hidden=true;if(touchy)$('touch').hidden=false;cam.x=player.x;cam.y=player.y;toast('ברוכים הבאים לעיר וים','המכונית הירוקה לידכם היא שלכם',2200);}
 $('go').addEventListener('click',begin);
 if(save.done>0||save.money!==500){$('go').textContent=`ממשיכים (${fmtMoney(save.money)})`;$('fresh').hidden=false;}
-$('fresh').addEventListener('click',()=>{save={money:500,best:{},done:0};persist();begin();});
+$('fresh').addEventListener('click',()=>{save={money:500,best:{},done:0,items:{},outfit:{shirt:'#ffc53d',hat:'#e63946',glasses:false}};applyOutfit();persist();begin();});
 resetWorld();
 cam.x=R(7);cam.y=R(7);
 hud();drawRadar();requestAnimationFrame(frame);
-window.__city={get player(){return player},startRace,startMission:t=>startMission(t,MARKERS.find(m=>m.mission===t)),setTime:t=>{dayT=t},get state(){return{stars,mission,race,money:save.money,cars:cars.length,peds:peds.length}},crime,teleport:(x,y)=>{player.x=x;player.y=y;cam.x=x;cam.y=y;}};
+window.__city={openStore,addMoney,get save(){return save},get player(){return player},startRace,startMission:t=>startMission(t,MARKERS.find(m=>m.mission===t)),setTime:t=>{dayT=t},get state(){return{stars,mission,race,money:save.money,cars:cars.length,peds:peds.length}},crime,teleport:(x,y)=>{player.x=x;player.y=y;cam.x=x;cam.y=y;}};
 })();
 </script>
