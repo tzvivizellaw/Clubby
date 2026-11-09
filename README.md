@@ -285,3 +285,11 @@ scripts/
 | App Store + Play Store | EAS Build (`eas build --platform all --profile production`) |
 | POS integration | Webhook API for purchase events from cashier systems |
 | AI analytics | Smart campaign recommendations based on member behavior |
+
+## Side project: הסיפור שלי (story-studio)
+
+A standalone Hebrew interactive-story & comic studio lives in [`story-studio/`](story-studio/README.md) (React + TypeScript + Vite, no server). See its README for setup.
+
+## פרויקט צד: הסיפור שלי
+
+סטודיו עצמאי ליצירת סיפורים וקומיקס אינטראקטיבי בעברית נמצא בתיקייה [`story-studio/`](story-studio/README.md). הוראות הפעלה ב־README שלו.
