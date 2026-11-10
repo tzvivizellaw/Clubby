@@ -19,12 +19,18 @@ def wrap(page, extra_body=''):
 
 # 1) offline single file: no web fonts, icons stay embedded
 offline = '\n'.join(l for l in src.split('\n') if 'fonts.googleapis' not in l)
+TAG = '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>'
+assert TAG in src
+three = (here / 'app' / 'three.min.js').read_text(encoding='utf-8')
+assert '</script' not in three
+offline = offline.replace(TAG, '<script>' + three + '</script>')
 (here / 'city-and-sea-offline.html').write_text(wrap(offline), encoding='utf-8')
 
 # 2) installable web app (GitHub Pages): icon files, manifest, service worker
+src_app = src.replace(TAG, '<script src="three.min.js"></script>')
 app = re.sub(r'<link rel="icon"[^>]*>',
              '<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">\n'
-             '<link rel="manifest" href="manifest.webmanifest">', src)
+             '<link rel="manifest" href="manifest.webmanifest">', src_app)
 app = re.sub(r'<link rel="apple-touch-icon"[^>]*>',
              '<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">\n'
              '<meta name="apple-mobile-web-app-capable" content="yes">\n'
