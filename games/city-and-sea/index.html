@@ -237,14 +237,14 @@ const fmtTime=f=>{const s=f/60,m=Math.floor(s/60);return m+':'+(s-m*60).toFixed(
 const N=16,NB=15,RX0=300,SP=520,HALF=48,SIDE=24;
 const R=i=>RX0+i*SP;
 const CITY0=R(0)-HALF,CITY1=R(NB)+HALF;
-const W=56000,H=10000;
+const W=78000,H=10000;
 const shoreAt=y=>8800+Math.sin(y/420)*90+Math.sin(y/97)*14;
 const MY=R(7);
 const PIER={x:Math.round(shoreAt(MY))-150,y:MY-38,w:620,h:76};
 const ISL={x:10800,y:2300,rx:560,ry:440};
 function islandF(x,y,s=1){const dx=(x-ISL.x)/(ISL.rx*s),dy=(y-ISL.y)/(ISL.ry*s);if(dx*dx+dy*dy>1.6)return 1;const a=Math.atan2(dy,dx);return dx*dx+dy*dy-(1+.07*Math.sin(a*5)+.04*Math.sin(a*11));}
 const IDOCK={x:ISL.x-ISL.rx-230,y:ISL.y-30,w:290,h:60};
-const isLand=(x,y)=>x<shoreAt(y)||inRect(x,y,PIER)||inRect(x,y,IDOCK)||islandF(x,y)<0||x>coastA(y)||inCyprus(x,y)||hyp(x-STAT.x,y-STAT.y)<STAT.r||inRect(x,y,SDOCK);
+const isLand=(x,y)=>x<shoreAt(y)||inRect(x,y,PIER)||inRect(x,y,IDOCK)||islandF(x,y)<0||(x>coastA(y)&&x<coastE(y))||x>coastC(y)||inRect(x,y,CDOCK)||inCyprus(x,y)||hyp(x-STAT.x,y-STAT.y)<STAT.r||inRect(x,y,SDOCK);
 const nearNode=v=>clamp(Math.round((v-RX0)/SP),0,NB);
 
 function districtOf(i,j){
@@ -398,6 +398,9 @@ const CY=[[15600,4300],[15900,3700],[16600,3500],[17400,3650],[18200,3500],[1920
 const CYB={x0:15500,x1:23600,y0:2000,y1:5700};
 function inCyprus(x,y){return x>CYB.x0&&x<CYB.x1&&y>CYB.y0&&y<CYB.y1&&inPoly(x,y,CY);}
 function coastA(y){return 40000+Math.sin(y/700)*400+Math.sin(y/170)*60;}
+function coastE(y){return 56900+Math.sin(y/600)*350+Math.sin(y/140)*40;}
+function coastC(y){return 66500+Math.sin(y/650)*380+Math.sin(y/150)*50;}
+const CDOCK={x:66150,y:3972,w:480,h:56};
 const STAT={x:39000,y:4200,r:280};
 const SDOCK={x:39000+280-70,y:4200-28,w:340,h:56};
 const DESERT=50500;
@@ -406,8 +409,9 @@ const AIRPORTS=[
   {id:'home',name:'שדה התעופה עיר וים',run:{x:1800,y:9300,w:2600,h:120},apron:{x:2200,y:8900,w:1700,h:360},term:{x:3950,y:8640,w:700,h:200}},
   {id:'cy',name:'שדה התעופה לרנקה',run:{x:18400,y:4700,w:1800,h:110},apron:{x:18600,y:4460,w:1100,h:220},term:{x:19800,y:4420,w:500,h:170}},
   {id:'us',name:'שדה התעופה של ניו יורק',run:{x:48200,y:7450,w:2800,h:130},apron:{x:48400,y:7050,w:1600,h:360},term:{x:50150,y:6860,w:700,h:220}},
+  {id:'cn',name:'שדה התעופה של שנגחאי',run:{x:74600,y:7700,w:2600,h:130},apron:{x:74800,y:7320,w:1600,h:340},term:{x:76500,y:7060,w:700,h:220}},
 ];
-AIRPORTS.forEach(a=>addB(bld(a.term.x,a.term.y,a.term.w,a.term.h,34,'#e9eef2','#8fa3b5','shop',{label:a.id==='home'?'שדה התעופה':a.id==='cy'?'לרנקה':'נמל תעופה'})));
+AIRPORTS.forEach(a=>addB(bld(a.term.x,a.term.y,a.term.w,a.term.h,34,'#e9eef2','#8fa3b5','shop',{label:a.id==='home'?'שדה התעופה':a.id==='cy'?'לרנקה':a.id==='cn'?'שנגחאי':'נמל תעופה'})));
 road(R(5),CITY1,R(5),8900,96);
 const TOWNS=[];
 function town(name,x0,y0,cols,rows,sp,o){
@@ -418,7 +422,8 @@ function town(name,x0,y0,cols,rows,sp,o){
   for(let i=0;i<cols;i++)for(let j=0;j<rows;j++){
     const bx=x0+i*sp+o.rw/2+16,by=y0+j*sp+o.rw/2+16,bw=sp-o.rw-32;
     if(o.park&&o.park(i,j)){PLAZAS.push({x:bx-16,y:by-16,w:bw+32,h:bw+32,c:'#7fc46e'});for(let k=0;k<7;k++)addD({t:'tree',x:bx+rand()*bw,y:by+rand()*bw,r:16+rand()*10});continue;}
-    for(const[a,b,c,d]of splitRect(bx,by,bx+bw,by+bw,o.split(),o.gap)){const col=pick(o.cols,rand);const B=addB(bld(a,b,c-a,d-b,o.ht(),col,o.roofs?pick(o.roofs,rand):shade(col,-.08),o.kind));if(o.kind==='tower'){addAC(B,1+rand()*3|0);if(B.ht>200&&c-a>120&&d-b>120)B.heli=true;}}
+    const kind=o.kindAt?o.kindAt(i,j):o.kind;
+    for(const[a,b,c,d]of splitRect(bx,by,bx+bw,by+bw,o.split(),o.gap)){const pg=kind==='pagoda',col=pick(pg?o.pcols:o.cols,rand),rf=pg?o.proofs:o.roofs;const B=addB(bld(a,b,c-a,d-b,pg?24+rand()*16:o.ht(),col,rf?pick(rf,rand):shade(col,-.08),kind));if(kind==='tower'){addAC(B,1+rand()*3|0);if(B.ht>200&&c-a>120&&d-b>120)B.heli=true;}}
   }
 }
 const CYO={rw:46,ground:'#e9e2cf',cols:['#f7f4ee','#f3ece0','#efe6d6','#fbf8f2'],roofs:['#c8603a','#b5523b','#d9774d','#2f6fb0','#f2f2f2'],kind:'house',ht:()=>16+rand()*10,split:()=>3,gap:16};
@@ -439,8 +444,29 @@ for(const[x,y]of[[20800,4380],[20700,4560],[18000,5520],[18400,5560],[16300,4880
 for(const[x,y,c]of[[20820,4470,'#e63946'],[20760,4620,'#3a86ff'],[18200,5540,'#ffb703'],[17800,5470,'#2a9d8f']])addD({t:'umb',x,y,c});
 for(let k=0;k<260;k++){const x=DESERT+300+rand()*5000,y=200+rand()*9600;if(Math.abs(y-6600)<120||inRect(x,y,AIRPORTS[2].run,160)||inRect(x,y,AIRPORTS[2].apron,120)||inRect(x,y,AIRPORTS[2].term,120))continue;addD({t:rand()<.65?'cactus':'rock',x,y,r:10+rand()*14});}
 for(let k=0;k<160;k++){const x=40500+rand()*9800,y=100+rand()*9800;if(x<coastA(y)+250||x>desertAt(y)-100)continue;if(x>41300&&x<47460&&y>1100&&y<6300)continue;if(Math.abs(y-6600)<120||Math.abs(y-3700)<100)continue;if(AIRPORTS.some(a=>inRect(x,y,a.run,160)||inRect(x,y,a.apron,120)))continue;addD({t:'tree',x,y,r:15+rand()*12});}
+
+/* ---- China ---- */
+const CNO={rw:70,ground:'#d3cbbb',cols:['#8fb3d1','#6f93b5','#a7bccf','#3d5a80','#c8d3dc','#9fb8a9'],pcols:['#f3e3c3','#efd9b4','#f6ead2'],proofs:['#c0392b','#b23a48','#2a9d8f','#264653','#9d0208'],kind:'tower',ht:()=>120+rand()*180,split:()=>rand()*4|0,gap:22,
+  kindAt:(i,j)=>Math.max(Math.abs(i-6),Math.abs(j-5))<=2?'tower':'pagoda',park:(i,j)=>i>=2&&i<=3&&j>=3&&j<=4};
+town('שנגחאי',68000,1500,12,10,500,CNO);
+{const tw=fb.filter(b=>b.kind==='tower'&&b.x>70000&&b.x<72500&&b.y>3500&&b.y<4600).sort((a,b)=>b.w*b.h-a.w*a.h)[0];if(tw){tw.ht=340;tw.label='מגדל שנגחאי';tw.heli=true;}}
+for(const[x,y]of[[69250,3250],[69450,3600]])addD({t:'pond',x,y,r:110});
+const WALLPTS=[[67300,900],[68600,600],[69800,850],[71000,500],[72300,800],[73500,450],[74800,700],[76000,400],[77500,650]];
+const CNHILLS=[[67800,700,900,360],[70300,620,1100,400],[73000,560,1200,420],[76000,520,1300,420]];
+road(68000,6950,77600,6950,110);road(71000,6500,71000,6950,80);road(71000,1500,71000,520,70);road(68000,3500,66700,3500,80);road(66700,3500,66700,4000,70);
+for(let k=0;k<220;k++){const x=66900+rand()*10900,y=200+rand()*9600;if(x<coastC(y)+200)continue;if(x>67900&&x<74100&&y>1400&&y<6600)continue;if(Math.abs(y-6950)<120||y<1150)continue;if(AIRPORTS.some(a=>inRect(x,y,a.run,160)||inRect(x,y,a.apron,120)||inRect(x,y,a.term,120)))continue;addD({t:rand()<.5?'bamboo':'cherry',x,y,r:12+rand()*10});}
+for(let k=0;k<40;k++)addD({t:'lantern',x:68250+k*140,y:6460,r:6});
 function placeAbroad(x,y){
+  if(x>61500){
+    if(!isLand(x,y))return x<coastC(y)-2500?'האוקיינוס השקט':'ליד חופי סין';
+    if(inRect(x,y,CDOCK,200))return'סין · הנמל';
+    if(inRect(x,y,{x:74400,y:6900,w:3400,h:1000}))return'שדה התעופה של שנגחאי';
+    if(y<1250)return'סין · החומה הגדולה';
+    if(x>67900&&x<74100&&y>1400&&y<6600)return(x>69000&&x<70000&&y>3000&&y<4000)?'סין · גן יו':'סין · שנגחאי';
+    return'סין';
+  }
   if(x>30000){
+    if(x>coastE(y)-100&&!isLand(x,y))return'האוקיינוס השקט';
     if(hyp(x-STAT.x,y-STAT.y)<STAT.r+400)return'אי הפסל';
     if(!isLand(x,y))return x<coastA(y)-2500?'האוקיינוס האטלנטי':'ליד חופי אמריקה';
     if(inRect(x,y,{x:48000,y:6800,w:3200,h:900}))return'שדה התעופה של ניו יורק';
@@ -454,7 +480,7 @@ function placeAbroad(x,y){
   if(hyp((x-17300)/620,(y-4450)/300)<1.2)return'קפריסין · הרי טרודוס';
   return'קפריסין';
 }
-const regionOf=x=>x<12500?'home':x<30000?'cy':'us';
+const regionOf=x=>x<12500?'home':x<30000?'cy':x<61500?'us':'cn';
 function landPath(c){c.beginPath();CY.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();}
 function drawLands(c,x0,y0,x1,y1,mini){
   if(x1>CYB.x0-500&&x0<CYB.x1+500&&y1>CYB.y0-500&&y0<CYB.y1+500){
@@ -480,10 +506,20 @@ function drawLands(c,x0,y0,x1,y1,mini){
     const st=mini?100:25,ys=Math.max(-50,Math.floor(y0/st)*st-st),ye=Math.min(H+50,y1+st);
     const band=(f,col)=>{c.fillStyle=col;c.beginPath();c.moveTo(x1+10,ys);for(let y=ys;y<=ye;y+=st)c.lineTo(f(y),y);c.lineTo(x1+10,ye);c.closePath();c.fill();};
     band(y=>coastA(y)-300,'#58b7ef');band(y=>coastA(y)-150,'#6cc6f2');band(coastA,'#f1dc9f');band(y=>coastA(y)+220,'#86c46c');band(desertAt,'#e4c590');
+    band(y=>coastE(y)-160,'#f1dc9f');band(coastE,'#6cc6f2');band(y=>coastE(y)+150,'#58b7ef');band(y=>coastE(y)+420,'#2279bd');
+    band(y=>coastC(y)-300,'#58b7ef');band(y=>coastC(y)-150,'#6cc6f2');band(coastC,'#f1dc9f');band(y=>coastC(y)+200,'#7fbf68');
+    if(!mini){c.strokeStyle='rgba(255,255,255,.75)';c.lineWidth=5;c.beginPath();for(let y=ys;y<=ye;y+=st){const x=coastC(y)-4+Math.sin(time*.04+y/40)*4;y===ys?c.moveTo(x,y):c.lineTo(x,y);}c.stroke();}
+    for(const[hx,hy,rx,ry]of CNHILLS)if(hx+rx>x0&&hx-rx<x1&&hy+ry>y0&&hy-ry<y1){c.fillStyle='#5f9e57';c.beginPath();c.ellipse(hx,hy,rx,ry,0,0,TAU);c.fill();c.fillStyle='#4f8a48';c.beginPath();c.ellipse(hx,hy-ry*.15,rx*.6,ry*.55,0,0,TAU);c.fill();}
     if(!mini){c.strokeStyle='rgba(255,255,255,.75)';c.lineWidth=5;c.beginPath();for(let y=ys;y<=ye;y+=st){const x=coastA(y)-4+Math.sin(time*.04+y/40)*4;y===ys?c.moveTo(x,y):c.lineTo(x,y);}c.stroke();}
   }
 }
 function drawInfra(c,x0,y0,x1,y1,mini){
+  if(x1>66000&&y0<1300){c.lineJoin='round';c.lineCap='round';c.strokeStyle='#8c7b62';c.lineWidth=mini?60:46;c.beginPath();WALLPTS.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.stroke();
+    c.strokeStyle='#c9b48f';c.lineWidth=mini?40:30;c.stroke();
+    if(!mini){c.setLineDash([10,10]);c.strokeStyle='#a8946f';c.lineWidth=36;c.lineCap='butt';c.stroke();c.setLineDash([]);
+      for(const[x,y]of WALLPTS){c.fillStyle='rgba(0,0,0,.2)';c.fillRect(x-32,y-28,70,70);c.fillStyle='#b39e7a';c.fillRect(x-38,y-38,76,76);c.fillStyle='#c0392b';c.fillRect(x-24,y-24,48,48);c.fillStyle='#e9c46a';c.fillRect(x-6,y-6,12,12);}}
+    c.lineCap='butt';}
+  if(x1>CDOCK.x&&x0<CDOCK.x+CDOCK.w&&y1>CDOCK.y-60&&y0<CDOCK.y+CDOCK.h+60){c.fillStyle='#a87444';c.fillRect(CDOCK.x,CDOCK.y,CDOCK.w,CDOCK.h);if(!mini){c.strokeStyle='#86592f';c.lineWidth=2;c.beginPath();for(let x=CDOCK.x;x<CDOCK.x+CDOCK.w;x+=14){c.moveTo(x,CDOCK.y);c.lineTo(x,CDOCK.y+CDOCK.h);}c.stroke();}}
   for(const p of PLAZAS)if(!p.e&&p.x<x1&&p.x+p.w>x0&&p.y<y1&&p.y+p.h>y0){c.fillStyle=p.c;c.fillRect(p.x,p.y,p.w,p.h);}
   c.lineCap='square';
   for(const r of ROADS2){if(Math.max(r.x1,r.x2)+r.w<x0||Math.min(r.x1,r.x2)-r.w>x1||Math.max(r.y1,r.y2)+r.w<y0||Math.min(r.y1,r.y2)-r.w>y1)continue;c.strokeStyle=mini?'#545a63':'#4b5058';c.lineWidth=r.w;c.beginPath();c.moveTo(r.x1,r.y1);c.lineTo(r.x2,r.y2);c.stroke();}
@@ -507,6 +543,10 @@ function drawDecor(x0,y0,x1,y1){
       else if(d.t==='olive'){ctx.fillStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.arc(d.x+6,d.y+5,d.r,0,TAU);ctx.fill();ctx.fillStyle='#7d8f5a';ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,TAU);ctx.fill();ctx.fillStyle='#98a974';ctx.beginPath();ctx.arc(d.x-d.r*.3,d.y-d.r*.3,d.r*.5,0,TAU);ctx.fill();}
       else if(d.t==='cactus'){ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(d.x+3,d.y-4,d.r*1.6,8);ctx.fillStyle='#3f8f4a';rr(d.x-5,d.y-d.r,10,d.r*2,5);ctx.fill();rr(d.x-d.r,d.y-3,d.r,6,3);ctx.fill();rr(d.x,d.y-d.r*.6,d.r*.8,6,3);ctx.fill();ctx.fillStyle='#5cb85f';ctx.fillRect(d.x-1.5,d.y-d.r+3,3,d.r*2-6);}
       else if(d.t==='rock'){ctx.fillStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.ellipse(d.x+5,d.y+4,d.r*1.2,d.r*.8,0,0,TAU);ctx.fill();ctx.fillStyle='#b9845a';ctx.beginPath();ctx.ellipse(d.x,d.y,d.r*1.2,d.r*.8,.3,0,TAU);ctx.fill();ctx.fillStyle='#d19c70';ctx.beginPath();ctx.ellipse(d.x-d.r*.3,d.y-d.r*.2,d.r*.5,d.r*.3,.3,0,TAU);ctx.fill();}
+      else if(d.t==='pond'){ctx.fillStyle='#d9d2c2';ctx.beginPath();ctx.ellipse(d.x,d.y,d.r+12,d.r*.65+12,0,0,TAU);ctx.fill();ctx.fillStyle='#5ab8ee';ctx.beginPath();ctx.ellipse(d.x,d.y,d.r,d.r*.65,0,0,TAU);ctx.fill();ctx.fillStyle='#ff8c42';for(let k=0;k<3;k++){const a=time*.02+k*2.1;ctx.beginPath();ctx.ellipse(d.x+Math.cos(a)*d.r*.5,d.y+Math.sin(a)*d.r*.3,6,3,a+1.57,0,TAU);ctx.fill();}}
+      else if(d.t==='bamboo'){ctx.fillStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.arc(d.x+6,d.y+5,d.r,0,TAU);ctx.fill();ctx.fillStyle='#6a994e';for(let k=0;k<5;k++){const a=k*1.26;ctx.beginPath();ctx.ellipse(d.x+Math.cos(a)*d.r*.5,d.y+Math.sin(a)*d.r*.5,d.r*.6,3,a,0,TAU);ctx.fill();}ctx.fillStyle='#a7c957';ctx.beginPath();ctx.arc(d.x,d.y,3,0,TAU);ctx.fill();}
+      else if(d.t==='cherry'){ctx.fillStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.arc(d.x+6,d.y+5,d.r,0,TAU);ctx.fill();ctx.fillStyle='#f4acb7';ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,TAU);ctx.fill();ctx.fillStyle='#ffcad4';ctx.beginPath();ctx.arc(d.x-d.r*.3,d.y-d.r*.3,d.r*.5,0,TAU);ctx.fill();}
+      else if(d.t==='lantern'){ctx.fillStyle='#e63946';ctx.beginPath();ctx.ellipse(d.x,d.y,7,9,0,0,TAU);ctx.fill();ctx.fillStyle='#ffd166';ctx.fillRect(d.x-3,d.y-10,6,3);ctx.fillRect(d.x-3,d.y+7,6,3);}
       else if(d.t==='umb'){ctx.fillStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.arc(d.x+6,d.y+6,20,0,TAU);ctx.fill();for(let k=0;k<8;k++){ctx.fillStyle=k%2?d.c:'#fff';ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.arc(d.x,d.y,20,k/8*TAU,(k+1)/8*TAU);ctx.fill();}}
     }}
 }
@@ -554,14 +594,18 @@ const VT={
   van:{name:'טנדר',max:6.2,acc:.13,turn:.045,grip:.22,len:54,wid:25,price:700,cruise:2.2},
   taxi:{name:'מונית',max:7.4,acc:.17,turn:.053,grip:.2,len:46,wid:22,price:1200,cruise:2.7},
   sports:{name:'מכונית ספורט',max:9.4,acc:.25,turn:.062,grip:.17,len:48,wid:22,price:3500,cruise:3.1},
+  super:{name:'מכונית־על',max:11.6,acc:.32,turn:.07,grip:.19,len:50,wid:22,price:9000,cruise:3.2},
+  electric:{name:'מכונית חשמלית',max:10.4,acc:.42,turn:.066,grip:.21,len:46,wid:22,price:6000,cruise:3},
+  monster:{name:'משאית מפלצת',max:8.2,acc:.2,turn:.05,grip:.26,len:58,wid:30,price:5000,cruise:2.4},
   race:{name:'מכונית מרוץ',max:10,acc:.28,turn:.068,grip:.19,len:50,wid:23,price:0,cruise:3},
   police:{name:'ניידת',max:8.6,acc:.22,turn:.06,grip:.2,len:48,wid:23,cruise:2.8},
 };
 const BT={
   speed:{name:'סירת מנוע',max:7.6,acc:.15,turn:.042,len:58,wid:22,price:120},
   jet:{name:'אופנוע ים',max:8.8,acc:.2,turn:.056,len:34,wid:14,price:70},
-  racer:{name:'סירת מרוץ',max:8.6,acc:.19,turn:.05,len:60,wid:22},
-  yacht:{name:'יאכטה',max:5.4,acc:.08,turn:.028,len:92,wid:32},
+  racer:{name:'סירת מרוץ',max:8.6,acc:.19,turn:.05,len:60,wid:22,price:1500},
+  hydro:{name:'סירת רחף',max:11.5,acc:.26,turn:.056,len:56,wid:24,price:4000},
+  yacht:{name:'יאכטה',max:6,acc:.09,turn:.03,len:92,wid:32,price:900},
 };
 const SKIN=['#f1c27d','#e0ac69','#c68642','#8d5524','#ffdbac','#a86b3c'];
 const SHIRT=['#3d5a80','#2a9d8f','#e76f51','#6a4c93','#264653','#8ab17d','#457b9d','#bc6c25','#588157','#d62828','#f4a261'];
@@ -574,7 +618,7 @@ const lanePt=(i,j,d)=>{let x=R(i),y=R(j);if(d===0)y+=22;else if(d===1)x-=22;else
 function aiPick(c){const o=validDirs(c.ni,c.nj).filter(d=>d!==(c.dir+2)%4);c.dir=o.length?pick(o):(c.dir+2)%4;c.ni+=DX[c.dir];c.nj+=DY[c.dir];}
 
 let cars=[],boats=[],peds=[],parts=[],skids=[],planes=[];
-const PT={cessna:{name:'מטוס קל',max:15,acc:.1,turn:.032,gturn:.05,fly:7,len:62,wing:80,price:4000},jet:{name:'מטוס סילון',max:23,acc:.085,turn:.022,gturn:.04,fly:9,len:120,wing:112,price:12000}};
+const PT={cessna:{name:'מטוס קל',max:15,acc:.1,turn:.032,gturn:.05,fly:7,len:62,wing:80,price:4000},jet:{name:'מטוס סילון',max:23,acc:.085,turn:.022,gturn:.04,fly:9,len:120,wing:112,price:12000,jetlike:true},super:{name:'מטוס על־קולי',max:33,acc:.14,turn:.026,gturn:.04,fly:10,len:130,wing:88,price:30000,jetlike:true}};
 function mkPlane(type,x,y,a,color,extra){return Object.assign({kind:'plane',type,x,y,a,spd:0,vx:0,vy:0,alt:0,color,owned:false,stolen:false,prop:0},extra||{});}
 function overRunway(x,y){for(const ap of AIRPORTS)if(inRect(x,y,ap.run,90)||inRect(x,y,ap.apron,30))return ap;return null;}
 const blockedPlane=(x,y)=>out(x,y,40)||!isLand(x,y)||inBuilding(x,y,24);
@@ -620,6 +664,13 @@ const MARKERS=[
   {id:'planes',type:'store',store:'airport',x:4050,y:8890,label:'מכירת מטוסים'},
   {id:'cyprus',type:'mission',mission:'cyprus',x:4250,y:8890,label:'טיסות לקפריסין',long:true},
   {id:'america',type:'mission',mission:'america',x:4450,y:8890,label:'טיסות לאמריקה',long:true},
+  {id:'china',type:'mission',mission:'china',x:4650,y:8890,label:'טיסות לסין',long:true},
+  {id:'cy_yachts',type:'store',store:'cy_yachts',x:17950,y:5470,label:'יאכטות לימסול'},
+  {id:'cy_boutique',type:'store',store:'cy_boutique',x:19145,y:4080,label:'בוטיק ניקוסיה'},
+  {id:'us_cars',type:'store',store:'us_cars',x:42220,y:6100,label:'מכוניות־על'},
+  {id:'us_tech',type:'store',store:'us_tech',x:45580,y:6100,label:'מגה־טק'},
+  {id:'cn_mall',type:'store',store:'cn_mall',x:71250,y:6500,label:'קניון הדרקון'},
+  {id:'cn_market',type:'store',store:'cn_market',x:69250,y:6500,label:'שוק הלילה'},
   {id:'race0',type:'race',race:0,x:R(5)-210,y:R(5)+60,label:'מרוץ מרכז העיר'},
   {id:'race1',type:'race',race:1,x:R(1)-210,y:R(10)+60,label:'מרוץ התעשייה'},
   {id:'race2',type:'race',race:2,x:PIER.x+PIER.w-50,y:MY,label:'מרוץ הסירות'},
@@ -655,9 +706,10 @@ function resetWorld(){
   pp(AIRPORTS[0],[['cessna',700,'#e63946'],['jet',1050,'#3a86ff'],['cessna',1450,'#2a9d8f']]);
   pp(AIRPORTS[1],[['cessna',380,'#ffb703'],['jet',760,'#06d6a0']]);
   pp(AIRPORTS[2],[['jet',350,'#e63946'],['cessna',750,'#8338ec'],['jet',1150,'#264653']]);
-  for(const t of TOWNS){const n=t.name==='ניו יורק'?18:3;for(let k=0;k<n;k++){const horiz=rnd()<.5,i=rnd()*t.cols|0,j=rnd()*(t.rows+1)|0;
+  pp(AIRPORTS[3],[['jet',350,'#c1121f'],['cessna',750,'#ffd166']]);
+  for(const t of TOWNS){const n=t.name==='ניו יורק'?18:t.name==='שנגחאי'?14:3;for(let k=0;k<n;k++){const horiz=rnd()<.5,i=rnd()*t.cols|0,j=rnd()*(t.rows+1)|0;
     const x=horiz?t.x0+(i+.5)*t.sp:t.x0+(rnd()*(t.cols+1)|0)*t.sp+18,y=horiz?t.y0+j*t.sp+18:t.y0+((rnd()*t.rows|0)+.5)*t.sp;
-    const ny=t.name==='ניו יורק',type=ny&&rnd()<.6?'taxi':pick(['sedan','sedan','van','sports']);
+    const ny=t.name==='ניו יורק',type=t.name==='שנגחאי'&&rnd()<.4?'electric':ny&&rnd()<.6?'taxi':pick(['sedan','sedan','van','sports']);
     if(!blockedCar(x,y))cars.push(mkCar(type,type==='taxi'?'#ffd60a':pick(CARCOL),x,y,horiz?0:Math.PI/2,{keep:true}));}}
   for(let k=0;k<6;k++)populate(true);
 }
@@ -835,7 +887,7 @@ function cancelActivity(){
 let nitroCharge=1,nitroT=0;
 function carStats(c){
   const T=VT[c.type];if(!c.owned)return T;
-  const I=save.items,e=(I.engine1?1:0)+(I.engine2?1:0)+(I.engine3?1:0),o=Object.assign({},T);
+  const I=save.items,e=(I.engine1?1:0)+(I.engine2?1:0)+(I.engine3?1:0)+(I.engine4?2:0),o=Object.assign({},T);
   o.max*=1+.09*e;o.acc*=1+.15*e;if(I.tires){o.grip*=1.25;o.turn*=1.12;}
   if(nitroT>0){o.max+=3.4;o.acc+=.32;}
   return o;
@@ -899,7 +951,7 @@ function flyPlane(p,inp,dt){
   if(p.alt>0&&p.alt<1&&p.spd>T.fly&&rnd()<.4)parts.push({x:p.x-Math.cos(p.a)*T.len*.5,y:p.y-Math.sin(p.a)*T.len*.5,vx:0,vy:0,life:40,max:40,r:6,grow:.3,c:'235,235,235',a:.4});
 }
 function planeShape(T,body,shadow){
-  const L=T.len,Wn=T.wing,h=L/2,fw=L*.085,jet=T===PT.jet;
+  const L=T.len,Wn=T.wing,h=L/2,fw=L*.085,jet=!!T.jetlike;
   ctx.fillStyle=body;
   ctx.beginPath();
   if(jet){ctx.moveTo(L*.14,-fw);ctx.lineTo(-L*.12,-Wn/2);ctx.lineTo(-L*.22,-Wn/2);ctx.lineTo(-L*.06,-fw);ctx.moveTo(L*.14,fw);ctx.lineTo(-L*.12,Wn/2);ctx.lineTo(-L*.22,Wn/2);ctx.lineTo(-L*.06,fw);}
@@ -916,7 +968,7 @@ function drawPlane(p){
   ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(0,0,h,fw,0,0,TAU);ctx.stroke();
   ctx.fillStyle=p.color;ctx.fillRect(-h*.85,-fw*.28,h*1.55,fw*.56);ctx.fillRect(-h*1.02,-T.wing*.19,h*.12,T.wing*.38);
   ctx.fillStyle='#35607f';ctx.beginPath();ctx.ellipse(h*.74,0,L*.07,fw*.72,0,0,TAU);ctx.fill();
-  if(T===PT.jet){ctx.fillStyle='#4a5560';for(const sy of[-1,1]){ctx.beginPath();ctx.ellipse(L*.02,sy*T.wing*.24,L*.07,4.5,0,0,TAU);ctx.fill();}ctx.fillStyle='rgba(53,96,127,.8)';for(let x=-h*.6;x<h*.55;x+=8){ctx.fillRect(x,-fw*.62,4,2.2);ctx.fillRect(x,fw*.62-2.2,4,2.2);}}
+  if(T.jetlike){ctx.fillStyle='#4a5560';for(const sy of[-1,1]){ctx.beginPath();ctx.ellipse(L*.02,sy*T.wing*.24,L*.07,4.5,0,0,TAU);ctx.fill();}ctx.fillStyle='rgba(53,96,127,.8)';for(let x=-h*.6;x<h*.55;x+=8){ctx.fillRect(x,-fw*.62,4,2.2);ctx.fillRect(x,fw*.62-2.2,4,2.2);}}
   else{ctx.save();ctx.translate(h+1,0);if(p.spd>.5){ctx.fillStyle='rgba(60,60,60,.25)';ctx.beginPath();ctx.ellipse(0,0,2.5,15,0,0,TAU);ctx.fill();}else{ctx.rotate(p.prop);ctx.fillStyle='#333';ctx.fillRect(-1.5,-15,3,30);}ctx.restore();ctx.fillStyle='#333';ctx.beginPath();ctx.arc(h,0,3.5,0,TAU);ctx.fill();}
   ctx.restore();
   if(p.owned&&p!==player.veh&&p.alt===0){ctx.fillStyle='#3ddc84';ctx.beginPath();ctx.arc(p.x,p.y-T.wing/2-14,6,0,TAU);ctx.fill();}
@@ -1060,6 +1112,7 @@ const MISSIONS={
   rescue:{title:'משמר החוף',len:'7 שלבים',reward:'1,200 ₪',brief:'ארבעה שחיינים נסחפו לים הפתוח. בסירת ההצלה יש מקום לשניים בכל פעם: מחלצים שניים, מביאים אותם לחוף, ויוצאים שוב לשניים הנותרים.',steps:rescueSteps},
   treasure:{title:'המטמון של הקפטן',len:'7 רמזים',reward:'2,600 ₪',brief:'מפה ישנה של קפטן מוביל לשבעה רמזים ברחבי העיר והים. כל רמז מגלה את המקום הבא, ובסוף מחכה תיבת אוצר.',steps:treasureSteps},
   cyprus:{title:'חופשה בקפריסין',len:'7 שלבים',reward:'2,500 ₪',brief:'מטוס קל מחכה לכם ברחבת החניה. טסים מזרחה מעל הים לקפריסין, נוחתים בלרנקה, נוסעים ברכב שכור לעיר העתיקה של ניקוסיה ולחוף של לימסול, וטסים חזרה הביתה.',steps:cyprusSteps},
+  china:{title:'המסע הגדול לסין',len:'8 שלבים',reward:'5,000 ₪',brief:'מטוס סילון מחכה לכם. טסים מזרחה מעבר לקפריסין, לאמריקה ולאוקיינוס השקט עד סין. נוסעים במכונית חשמלית לחומה הגדולה, הולכים עליה ברגל, מבקרים בשוק הלילה של שנגחאי, וטסים הביתה.',steps:chinaSteps},
   america:{title:'הטיסה הגדולה לאמריקה',len:'8 שלבים',reward:'3,800 ₪',brief:'מטוס סילון מחכה לכם. חוצים את הים התיכון ואת האוקיינוס האטלנטי, נוחתים בניו יורק, נוסעים במונית בין גורדי השחקים, מטיילים בפארק המרכזי, יוצאים בכביש המהיר למדבר, וטסים הביתה.',steps:americaSteps},
   coins:{title:'ציד מטבעות',brief:'12 מטבעות זהב פוזרו ברחובות העיר. אספו כמה שיותר תוך 4 דקות.',reward:'40 ₪ למטבע + 300 ₪ על כולם'},
 };
@@ -1147,6 +1200,19 @@ function americaSteps(m){
     {t:'טוסו הביתה ונחתו בשדה התעופה של עיר וים',need:'plane',land:true,ap:H0,...mid(H0)},
   ],final:3200,finalMsg:'איזה מסע! חזרתם מאמריקה'};
 }
+function chinaSteps(m){
+  const H0=AIRPORTS[0],C=AIRPORTS[3],mid=a=>({x:a.run.x+a.run.w/2,y:a.run.y+a.run.h/2});
+  return{steps:[
+    {t:'עלו על מטוס הסילון הכתום שמחכה ברחבת החניה',need:'board',vt:'plane',ptype:'jet',x:H0.apron.x+300,y:H0.apron.y+H0.apron.h/2},
+    {t:'טוסו מזרחה עד סין ונחתו בשנגחאי (אפשר "נחיתה")',need:'plane',land:true,ap:C,...mid(C),msg:'נחתתם בסין!'},
+    {t:'קחו את המכונית החשמלית שמחכה ליד הטרמינל',need:'board',vt:'car',ctype:'electric',x:C.term.x+C.term.w/2,y:C.term.y-100,a:Math.PI},
+    {t:'סעו צפונה אל החומה הגדולה',need:'car',x:71000,y:640,r:150,pay:250,msg:'"איזו חומה ארוכה!"'},
+    {t:'עלו ברגל על החומה ולכו עד המגדל הבא',need:'foot',x:72300,y:800,r:110,pay:250,msg:'"רואים מפה את כל סין!"'},
+    {t:'בקרו בשוק הלילה של שנגחאי',need:'any',x:69250,y:6440,r:120,pay:200,msg:'"כמה פנסים אדומים!"'},
+    {t:'חזרו לשדה התעופה ועלו על המטוס',need:'board',vt:'plane',ptype:'jet',x:C.apron.x+150,y:C.apron.y+C.apron.h/2},
+    {t:'טוסו הביתה ונחתו בשדה התעופה של עיר וים',need:'plane',land:true,ap:H0,...mid(H0)},
+  ],final:4300,finalMsg:'חזרתם מסין! איזה מסע'};
+}
 function giveVeh(vt,at){
   const m=mission,list=vt==='boat'?boats:vt==='plane'?planes:cars,cur=m[vt];
   if(cur&&list.includes(cur)&&hyp(cur.x-player.x,cur.y-player.y)<2500)return;
@@ -1175,7 +1241,7 @@ function updateChain(m){
 }
 function arriveStep(s){
   if(mission.idx<mission.steps.length-1)SND.ding();
-  if(s.pay)addMoney(s.pay);
+  if(s.pay){s.pay=Math.round(s.pay*(save.items.money2?1.5:1));addMoney(s.pay);}
   if(s.msg)toast(s.msg,s.pay?'+'+s.pay+' ₪':'שלב '+(mission.idx+1)+' מתוך '+mission.steps.length,1500);
   if(s.icon)burst(s.x,s.y,14);
   nextStep();
@@ -1213,7 +1279,7 @@ function nextFare(){
   mission.ped=ped;mission.stage='pickup';mission.target=ped;mission.timer=mission.max=75*60;
   mission.text='אספו את הנוסע שמחכה ברחוב';
 }
-function completeMission(reward,msg){SND.win();addMoney(reward);save.done++;persist();toast(msg||'המשימה הושלמה!','+'+reward+' ₪',2200);burst(player.x,player.y);if(mission)for(const k of['boat','plane','car'])if(mission[k])mission[k].keep=false;mission=null;}
+function completeMission(reward,msg){SND.win();reward=Math.round(reward*(save.items.money2?1.5:1));addMoney(reward);save.done++;persist();toast(msg||'המשימה הושלמה!','+'+reward+' ₪',2200);burst(player.x,player.y);if(mission)for(const k of['boat','plane','car'])if(mission[k])mission[k].keep=false;mission=null;}
 function failMission(msg){SND.fail();if(mission){if(mission.ped)peds.splice(peds.indexOf(mission.ped),1);for(const k of['boat','plane','car'])if(mission[k])mission[k].keep=false;}mission=null;toast(msg||'המשימה נכשלה',null,1900);}
 function updateMission(dt){
   const m=mission;if(!m)return;
@@ -1351,6 +1417,8 @@ const ICON={
   car:c=>SVG(`<rect x="10" y="20" width="80" height="30" rx="10" fill="${c}" stroke="#16202c" stroke-width="3"/><rect x="58" y="24" width="12" height="22" rx="3" fill="#9fd3f5"/><rect x="22" y="24" width="10" height="22" rx="3" fill="#9fd3f5"/><rect x="18" y="14" width="14" height="6" fill="#16202c"/><rect x="66" y="14" width="14" height="6" fill="#16202c"/><rect x="18" y="50" width="14" height="6" fill="#16202c"/><rect x="66" y="50" width="14" height="6" fill="#16202c"/>`),
   boat:c=>SVG(`<path d="M92 32 Q70 12 14 16 L10 32 L14 48 Q70 52 92 32Z" fill="#fff" stroke="${c}" stroke-width="4"/><rect x="34" y="24" width="22" height="16" rx="3" fill="${c}"/><rect x="4" y="27" width="8" height="10" fill="#16202c"/>`),
   plane:c=>SVG(`<path d="M92 32 Q92 27 82 27 L58 27 L40 6 H31 L42 27 H20 L12 16 H6 L10 32 L6 48 H12 L20 37 H42 L31 58 H40 L58 37 H82 Q92 37 92 32Z" fill="#f4f6f8" stroke="#16202c" stroke-width="3" stroke-linejoin="round"/><rect x="24" y="29" width="54" height="6" fill="${c}"/><ellipse cx="84" cy="32" rx="5" ry="3.5" fill="#35607f"/>`),
+  card:()=>SVG('<rect x="16" y="12" width="68" height="42" rx="7" fill="#ffd60a" stroke="#16202c" stroke-width="3"/><rect x="16" y="20" width="68" height="8" fill="#16202c"/><rect x="24" y="36" width="18" height="10" rx="2" fill="#e9c46a" stroke="#b8860b"/><text x="70" y="48" font-size="12" font-weight="800" text-anchor="middle" fill="#16202c" font-family="Assistant">x1.5</text>'),
+  wing:()=>SVG('<path d="M50 14 L88 44 L62 40 L50 56 L38 40 L12 44Z" fill="#ff5d73" stroke="#16202c" stroke-width="3" stroke-linejoin="round"/><circle cx="50" cy="18" r="6" fill="#e0ac69" stroke="#16202c" stroke-width="2"/>'),
   turbo:()=>SVG('<path d="M92 34 Q70 16 18 20 L14 34 L18 48 Q70 52 92 34Z" fill="#fff" stroke="#0096c7" stroke-width="4"/><path d="M14 30 L-2 22 M14 38 L-2 46 M12 34 H-4" stroke="#ff8a00" stroke-width="4"/><path d="M58 18 L44 36 H54 L48 52 L66 30 H56Z" fill="#ffd60a" stroke="#16202c" stroke-width="2"/>'),
 };
 const STORES={
@@ -1384,6 +1452,45 @@ const STORES={
     {id:'drone',name:'רחפן צילום',desc:'מבט רחב יותר על העיר מלמעלה.',price:900,icon:'drone',once:true},
   ]},
   dealer:{name:'סוכנות רכב',tag:'רכב שקניתם הוא שלכם. נוהגים בו בלי שהמשטרה תתעניין בכם.',note:'הרכב יחכה לכם ברחוב ליד הסוכנות.',c:'#2b9a5c',items:['sedan','van','taxi','sports'].map(t=>({id:'car_'+t,name:VT[t].name,desc:{sedan:'נוחה ואמינה.',van:'גדול ויציב, קצת איטי.',taxi:'צהובה עם שלט, מושלמת למשימות מונית.',sports:'הכי מהירה בסוכנות.'}[t],price:VT[t].price,icon:'car',col:t==='taxi'?'#ffd60a':t==='sports'?'#e63946':t==='van'?'#f1faee':'#3a86ff',car:t}))},
+  cy_yachts:{name:'יאכטות לימסול',tag:'סירות יוקרה שאין בבית: יאכטה, סירת מרוץ וסירת רחף, הסירה הכי מהירה בעולם.',note:'הסירה תחכה במים מול החנות.',c:'#0077b6',boatAt:{x:18060,y:5830},items:[
+    {id:'boat_yacht',name:BT.yacht.name,desc:'ענקית ומפוארת, עם סיפון עץ.',price:BT.yacht.price,icon:'boat',col:'#1d3557',boat:'yacht'},
+    {id:'boat_racer',name:BT.racer.name,desc:'מהירה יותר מכל סירה בבית.',price:BT.racer.price,icon:'boat',col:'#ff3d68',boat:'racer'},
+    {id:'boat_hydro',name:BT.hydro.name,desc:'הסירה הכי מהירה בעולם המשחק.',price:BT.hydro.price,icon:'turbo',boat:'hydro'},
+    {id:'boatturbo',name:'טורבו לסירות',desc:'כל הסירות שלכם מהירות יותר.',price:800,icon:'turbo',once:true},
+  ]},
+  cy_boutique:{name:'בוטיק ניקוסיה',tag:'אופנה ים תיכונית, כובע קפטן וחליפת כנפיים לצניחה.',c:'#48cae4',items:[
+    {id:'shirt_med',name:'חולצה ים תיכונית',desc:'בצבע של הים בקפריסין.',price:150,icon:'shirt',col:'#48cae4',slot:'shirt'},
+    {id:'hat_captain',name:'כובע קפטן',desc:'לבן ומכובד, כמו של קברניט.',price:250,icon:'hat',col:'#f8f9fa',slot:'hat'},
+    {id:'shirt_gold',name:'חולצת זהב',desc:'זולה יותר מבבית!',price:450,icon:'shirt',col:'#ffd60a',slot:'shirt'},
+    {id:'wingsuit',name:'חליפת כנפיים',desc:'בצניחה טסים מהר יותר ונופלים לאט.',price:2500,icon:'wing',once:true},
+  ]},
+  us_cars:{name:'מכוניות־על אמריקה',tag:'המכוניות הכי חזקות בעולם המשחק, וגם ספורט זולה יותר מבבית.',note:'הרכב יחכה ברחוב מול החנות.',c:'#c1121f',items:[
+    {id:'car_super',name:VT.super.name,desc:'הכי מהירה שיש. משאירה את כולם מאחור.',price:VT.super.price,icon:'car',col:'#ffbe0b',car:'super'},
+    {id:'car_monster',name:VT.monster.name,desc:'גלגלים ענקיים, נוסעת על הכול.',price:VT.monster.price,icon:'car',col:'#6a4c93',car:'monster'},
+    {id:'car_sports_us',name:VT.sports.name,desc:'אותה מכונית, מחיר אמריקאי.',price:2800,icon:'car',col:'#e63946',car:'sports'},
+    {id:'nitro2',name:'ניטרו כפול',desc:'הניטרו נמשך יותר ונטען פי 2 מהר.',price:3000,icon:'nitro',once:true,req:'nitro',reqName:'ניטרו (במוסך טורבו)'},
+  ]},
+  us_tech:{name:'מגה־טק',tag:"גאדג'טים שעוד לא הגיעו לעיר וים.",c:'#3a0ca3',items:[
+    {id:'money2',name:'כרטיס זהב',desc:'כל פרס במשימות גדול ב־50%.',price:5000,icon:'card',once:true},
+    {id:'scanner2',name:'משבש משטרה',desc:'פחות ניידות במרדף, והמשטרה מוותרת פי 2 מהר.',price:4000,icon:'scanner',once:true},
+    {id:'drone',name:'רחפן צילום',desc:'זול יותר מבבית.',price:700,icon:'drone',once:true},
+    {id:'shirt_ny',name:'חולצת ניו יורק',desc:'כחולה כמו הלילה בעיר הגדולה.',price:150,icon:'shirt',col:'#14213d',slot:'shirt'},
+    {id:'hat_cowboy',name:'כובע בוקרים',desc:'בדיוק בשביל המדבר.',price:200,icon:'hat',col:'#8d5524',slot:'hat'},
+  ]},
+  cn_mall:{name:'קניון הדרקון',tag:'החנות הכי טובה בעולם: מכונית חשמלית, מנוע־על, סירת רחף ומטוס על־קולי.',note:'מכוניות מחכות ברחוב, מטוסים בשדה התעופה של שנגחאי, וסירות בנמל.',c:'#9d0208',ap:3,boatAt:{x:CDOCK.x+40,y:CDOCK.y-110},items:[
+    {id:'car_electric',name:VT.electric.name,desc:'התאוצה הכי חזקה שיש, ושקטה.',price:VT.electric.price,icon:'car',col:'#f1faee',car:'electric'},
+    {id:'engine4',name:'מנוע־על סיני',desc:'קפיצה ענקית במהירות לכל הרכבים שלכם.',price:6000,icon:'engine',col:'#8338ec',once:true},
+    {id:'pl_super',name:PT.super.name,desc:'הכי מהיר בשמיים. מגיעים הביתה בחצי דקה.',price:PT.super.price,icon:'plane',col:'#c1121f',plane:'super'},
+    {id:'boat_hydro',name:BT.hydro.name,desc:'זולה יותר מבקפריסין.',price:3500,icon:'turbo',boat:'hydro'},
+  ]},
+  cn_market:{name:'שוק הלילה',tag:'הכול זול יותר מבבית! בגדים, גאדג\'טים וניטרו.',c:'#e85d04',items:[
+    {id:'shirt_dragon',name:'חולצת דרקון',desc:'אדומה כמו הפנסים בשוק.',price:120,icon:'shirt',col:'#c1121f',slot:'shirt'},
+    {id:'hat_straw',name:'כובע קש',desc:'מגן מהשמש בשדות.',price:60,icon:'hat',col:'#e9c46a',slot:'hat'},
+    {id:'glasses',name:'משקפי שמש',desc:'אותם משקפיים, חצי מחיר.',price:60,icon:'glasses',slot:'glasses',col:true},
+    {id:'skate',name:'סקייטבורד',desc:'הליכה מהירה פי 1.5.',price:250,icon:'skate',once:true},
+    {id:'magnet',name:'מגנט מטבעות',desc:'אוסף מטבעות מרחוק.',price:180,icon:'magnet',once:true},
+    {id:'nitro',name:'ניטרו',desc:'דחיפה של מהירות במקש N.',price:850,icon:'nitro',once:true},
+  ]},
   airport:{name:'מכירת מטוסים',tag:'מטוס משלכם הוא חוקי לגמרי. ממריאים מהמסלול ונוחתים בכל שדה תעופה: בבית, בקפריסין ובאמריקה.',note:'המטוס יחכה ברחבת החניה.',c:'#264653',items:[
     {id:'pl_cessna',name:PT.cessna.name,desc:'קטן וזריז, נוחת בקלות. מושלם לקפריסין.',price:PT.cessna.price,icon:'plane',col:'#e63946',plane:'cessna'},
     {id:'pl_jet',name:PT.jet.name,desc:'הכי מהיר בעולם המשחק. טס לאמריקה בחצי דקה.',price:PT.jet.price,icon:'plane',col:'#3a86ff',plane:'jet'},
@@ -1394,6 +1501,9 @@ const STORES={
     {id:'boatturbo',name:'טורבו לסירות',desc:'כל הסירות שלכם מהירות יותר.',price:900,icon:'turbo',once:true},
   ]},
 };
+for(const m of MARKERS){if(m.type!=='store'||!/^(cy|us|cn)_/.test(m.store))continue;
+  let best=null,bd=1e9;for(const b of fb){if(b.label||b.kind==='statue')continue;const d=hyp(b.x+b.w/2-m.x,b.y+b.h/2-m.y);if(d<bd&&b.y+b.h<=m.y+10){bd=d;best=b;}}
+  if(best&&bd<450){const S=STORES[m.store];best.label=m.label;best.kind='shop';best.c='#f6efe3';best.roof=S.c;best.wA=shade(best.c,.1);best.wB=shade(best.c,-.3);best.ht=Math.min(best.ht,60);best.heli=false;best.ac=[];}}
 let storeOpen=null;
 const ownsItem=it=>it.price===0||!!save.items[it.id];
 function itemState(it){
@@ -1405,7 +1515,7 @@ function itemState(it){
   }
   if(it.once){
     if(save.items[it.id])return{label:'נקנה ✓',cls:'own',dis:true};
-    if(it.req&&!save.items[it.req])return{label:'קודם: '+STORES.garage.items.find(x=>x.id===it.req).name,dis:true};
+    if(it.req&&!save.items[it.req])return{label:'קודם: '+(it.reqName||STORES.garage.items.find(x=>x.id===it.req).name),dis:true};
     return{label:it.price.toLocaleString('he-IL')+' ₪ · קנייה',dis:save.money<it.price};
   }
   if(it.paint){const ok=player.mode==='car'&&player.veh.owned;return ok?{label:it.price+' ₪ · צביעה',dis:save.money<it.price}:{label:'צריך להגיע ברכב שלכם',dis:true};}
@@ -1418,9 +1528,9 @@ function useItem(it){SND.cash();
     applyOutfit();
   }else if(it.once){addMoney(-it.price);save.items[it.id]=true;toast('קניתם '+it.name+'!',it.desc,1700);}
   else if(it.paint){addMoney(-it.price);const c=player.veh,cols=['#e63946','#3a86ff','#2a9d8f','#111827','#ffb703','#8338ec','#ff70a6','#f1faee','#06d6a0'];let col=c.color;while(col===c.color)col=pick(cols);c.color=col;c.c1=shade(col,-.2);c.c2=shade(col,.22);c.c3=shade(col,-.32);toast('צבע חדש!',null,1100);}
-  else if(it.car)buyCar(it.car,MARKERS.find(m=>m.id==='dealer'));
-  else if(it.boat)rentBoat(it.boat);
-  else if(it.plane){const A=AIRPORTS[0].apron;const pl=mkPlane(it.plane,A.x+150+(planes.filter(q=>q.owned).length%3)*120,A.y+A.h/2,Math.PI/2,pick(['#e63946','#3a86ff','#ffb703','#06d6a0','#8338ec']),{owned:true});planes.push(pl);toast('קניתם '+PT[it.plane].name+'!','הוא מחכה ברחבת החניה',2000);}
+  else if(it.car)buyCar(it.car,MARKERS.find(m=>m.store===storeOpen)||MARKERS.find(m=>m.id==='dealer'),it.price);
+  else if(it.boat)rentBoat(it.boat,STORES[storeOpen].boatAt,it.price);
+  else if(it.plane){addMoney(-it.price);const A=AIRPORTS[STORES[storeOpen].ap||0].apron;const pl=mkPlane(it.plane,A.x+150+(planes.filter(q=>q.owned).length%3)*120,A.y+A.h/2,Math.PI/2,pick(['#e63946','#3a86ff','#ffb703','#06d6a0','#8338ec']),{owned:true});planes.push(pl);toast('קניתם '+PT[it.plane].name+'!','הוא מחכה ברחבת החניה',2000);}
   persist();renderStore();
 }
 function applyOutfit(){player.shirt=save.outfit.shirt;player.hat=save.outfit.hat;player.glasses=save.outfit.glasses;}
@@ -1442,15 +1552,16 @@ function renderStore(){
 function openStore(id){SND.bell();storeOpen=id;paused=true;keys.clear();renderStore();$('store').hidden=false;$('sitems').scrollTop=0;$('sexit').focus();}
 function closeStore(){storeOpen=null;$('store').hidden=true;paused=!started||mapOpen||!$('panel').hidden;persist();}
 $('sexit').addEventListener('click',closeStore);
-function buyCar(t,m){
-  addMoney(-VT[t].price);persist();
+function buyCar(t,m,price){
+  addMoney(-(price==null?VT[t].price:price));persist();
   const col=t==='taxi'?'#ffd60a':pick(['#e63946','#3a86ff','#2a9d8f','#111827','#ffb703','#8338ec']);
-  const c=mkCar(t,col,m.x+20,R(7)+28,0,{owned:true,mine:true});cars.push(c);
+  const abroad=m.store&&m.store!=='dealer';
+  const c=mkCar(t,col,m.x+40,abroad?m.y+(blockedCar(m.x+40,m.y-26)?26:-26):R(7)+28,0,{owned:true,mine:true});cars.push(c);
   toast('קניתם '+VT[t].name+'!','הרכב חונה ליד הסוכנות',2000);
 }
-function rentBoat(t){
-  addMoney(-BT[t].price);persist();
-  const b=mkBoat(t,PIER.x+120+rnd()*200,PIER.y-44,0,pick(['#e63946','#ffb703','#06d6a0','#3a86ff']),{owned:true,keep:true});boats.push(b);
+function rentBoat(t,at,price){
+  addMoney(-(price==null?BT[t].price:price));persist();
+  const b=mkBoat(t,at?at.x+(rnd()-.5)*120:PIER.x+120+rnd()*200,at?at.y:PIER.y-44,0,pick(['#e63946','#ffb703','#06d6a0','#3a86ff']),{owned:true,keep:true});boats.push(b);
   toast('השכרתם '+BT[t].name+'!','היא מחכה ליד הרציף',1800);
 }
 
@@ -1591,7 +1702,7 @@ function startTalk(){
   $('tav').style.background=p.shirt;$('tavf').style.background=p.skin;$('tavh').style.background=p.hat||p.hair;
   $('talk').hidden=false;SND.click();
   const rg=regionNow();
-  const hi=rg==='cy'?pick(['יאסו! זה "שלום" ביוונית. ברוכים הבאים לקפריסין!','קאלימרה! בוקר טוב מקפריסין!']):rg==='us'?pick(['הלו! כלומר, שלום! ברוכים הבאים לאמריקה!','היי! איך אתה מרגיש בעיר הגדולה?']):pick(['שלום! איך אפשר לעזור?','היי! יום יפה היום, נכון?','אהלן! מה קורה?','שלום שלום! צריך משהו?']);
+  const hi=rg==='cn'?pick(['ני האו! זה "שלום" בסינית. ברוכים הבאים לסין!','ני האו! כבר טעמת באוכל של שוק הלילה?']):rg==='cy'?pick(['יאסו! זה "שלום" ביוונית. ברוכים הבאים לקפריסין!','קאלימרה! בוקר טוב מקפריסין!']):rg==='us'?pick(['הלו! כלומר, שלום! ברוכים הבאים לאמריקה!','היי! איך אתה מרגיש בעיר הגדולה?']):pick(['שלום! איך אפשר לעזור?','היי! יום יפה היום, נכון?','אהלן! מה קורה?','שלום שלום! צריך משהו?']);
   reply(hi);
 }
 function endTalk(){
@@ -1617,7 +1728,7 @@ function menu(){
 }
 function askHow(){
   const rg=regionNow();
-  reply(rg==='cy'?pick(['מצוין! השמש פה זורחת כל היום.','טוב מאוד! הרגע אכלתי זיתים טריים מהעץ.','נהדר! כבר ראית את החוף של לימסול?']):rg==='us'?pick(['סבבה! אבל יש פה כל כך הרבה מוניות צהובות.','מעולה! עליתי היום לגג של גורד שחקים.','טוב! מחר אני נוסע למדבר לראות קקטוסים.']):pick(['מצוין! יום יפה היום.','קצת עייף, הלכתי המון.','הכי טוב! ראית את המטוסים שעפים מעל העיר?','נהדר! הייתי עכשיו בפארק המרכזי, יש שם מזרקה יפה.']));
+  reply(rg==='cn'?pick(['מצוין! הרגע חזרתי מהחומה הגדולה.','נהדר! בשוק הלילה יש הכי זול בעולם.','טוב! ראית את מגדל שנגחאי? הוא נוגע בעננים.']):rg==='cy'?pick(['מצוין! השמש פה זורחת כל היום.','טוב מאוד! הרגע אכלתי זיתים טריים מהעץ.','נהדר! כבר ראית את החוף של לימסול?']):rg==='us'?pick(['סבבה! אבל יש פה כל כך הרבה מוניות צהובות.','מעולה! עליתי היום לגג של גורד שחקים.','טוב! מחר אני נוסע למדבר לראות קקטוסים.']):pick(['מצוין! יום יפה היום.','קצת עייף, הלכתי המון.','הכי טוב! ראית את המטוסים שעפים מעל העיר?','נהדר! הייתי עכשיו בפארק המרכזי, יש שם מזרקה יפה.']));
 }
 function askTip(){
   if(stars>0){reply('המשטרה מחפשת אותך! תתרחק מהניידות, או תברח לים. בים הם לא יכולים לתפוס אותך.');return;}
@@ -1625,13 +1736,15 @@ function askTip(){
   const home=['במוסך טורבו קונים ניטרו. לוחצים N והמכונית טסה!','בפיצה רומא תמיד צריכים שליחים, וזה כסף טוב.','רוצה לטוס? יש שדה תעופה בדרום העיר.','מכונית שקונים בסוכנות היא חוקית, אף אחד לא ירדוף אחריך.','בגאדג\'ט סיטי יש סקייטבורד, הולכים איתו הרבה יותר מהר.','באי הדקלים יש מגדלור, ואומרים שיש שם גם אוצר...','במירוצים כדאי לבלום לפני הפנייה, לא בתוכה.'];
   const cy=['בניקוסיה יש רחובות עתיקים, שווה לראות.','החוף של לימסול הכי יפה באי.','בהרי טרודוס יש המון עצי זית.','מהשדה בלרנקה אפשר לטוס חזרה הביתה.'];
   const us=['הבניינים פה הכי גבוהים שיש!','אם תיסע מזרחה בכביש המהיר תגיע למדבר.','בפארק המרכזי אפשר לנוח בין העצים.','ליד החוף יש אי קטן עם פסל ענק.'];
-  reply(pick(rg==='cy'?cy:rg==='us'?us:home));
+  const cn=['בקניון הדרקון יש מטוס על־קולי, הכי מהיר בעולם!','בשוק הלילה הכול זול יותר מבבית.','החומה הגדולה נמצאת צפונית לעיר, יש אליה כביש.','בגן יו יש בריכה עם דגי זהב.','בנמל המערבי יש סירות חינם.'];
+  reply(pick(rg==='cn'?cn:rg==='cy'?cy:rg==='us'?us:home));
 }
 function askJoke(){reply(pick(JOKES));}
 function bye(){const t=pick(['להתראות! תיזהר בכביש.','ביי! נתראה!','יום טוב!','שיהיה בהצלחה!']);reply(t,[['סגירה',endTalk]]);}
 function placesHere(){
   const rg=regionNow(),A=AIRPORTS,mid=a=>({x:a.run.x+a.run.w/2,y:a.apron.y+a.apron.h/2});
   if(rg==='cy')return[...TOWNS.filter(t=>t.x0<30000&&t.x0>12500).map(t=>({label:t.name,x:t.cx,y:t.y0})),{label:'שדה התעופה',...mid(A[1])},{label:'החוף של לימסול',x:18060,y:5480}];
+  if(rg==='cn')return[{label:'קניון הדרקון',x:71250,y:6500},{label:'שוק הלילה',x:69250,y:6500},{label:'מגדל שנגחאי',x:71000,y:4000},{label:'גן יו',x:69500,y:3000},{label:'החומה הגדולה',x:71000,y:620},{label:'שדה התעופה',x:75600,y:7490},{label:'הנמל',x:CDOCK.x+300,y:CDOCK.y+28}];
   if(rg==='us')return[{label:'גורדי השחקים',x:44380,y:3700},{label:'הפארק המרכזי',x:44140,y:3000},{label:'המדבר',x:54000,y:6600},{label:'שדה התעופה',...mid(A[2])}];
   const mk=id=>{const m=MARKERS.find(q=>q.id===id);return{label:m.label,x:m.x,y:m.y};};
   return[mk('pizza'),mk('dealer'),mk('garage'),mk('fashion'),mk('gadget'),{label:'המרינה',x:PIER.x+70,y:MY},{label:'שדה התעופה',...mid(A[0])},{label:'תחנת המשטרה',...STATION}];
@@ -1664,6 +1777,7 @@ function askRide(){
 function freeBoatSpots(){return[
   {type:'speed',x:SDOCK.x+SDOCK.w-60,y:SDOCK.y-44,a:0,isle:STAT},{type:'jet',x:SDOCK.x+SDOCK.w-150,y:SDOCK.y+SDOCK.h+34,a:0,isle:STAT},
   {type:'speed',x:IDOCK.x+150,y:IDOCK.y+IDOCK.h+44,a:Math.PI,isle:{x:ISL.x,y:ISL.y,r:ISL.rx}},
+  {type:'speed',x:CDOCK.x+60,y:CDOCK.y-44,a:Math.PI,isle:{x:66700,y:4000,r:900}},{type:'jet',x:CDOCK.x+130,y:CDOCK.y+CDOCK.h+34,a:Math.PI,isle:{x:66700,y:4000,r:900}},
 ];}
 function ensureIslandBoat(){
   if(player.mode!=='foot')return;
@@ -1718,12 +1832,12 @@ function openChute(){
   player.chute=true;SND.door();SND.whoosh();toast('המצנח נפתח!','כוונו עם החצים לנחיתה רכה',1500);
 }
 function updateSky(inp,dt){
-  const sp=player.chute?2.6:4.8;
+  const ws=save.items.wingsuit,sp=player.chute?(ws?4:2.6):(ws?9:4.8);
   player.vx+=(inp.x*sp-player.vx)*.045*dt;player.vy+=(inp.y*sp-player.vy)*.045*dt;
   const nx=player.x+player.vx*dt,ny=player.y+player.vy*dt;
   if(!out(nx,ny,60)){player.x=nx;player.y=ny;}
   if(Math.abs(player.vx)+Math.abs(player.vy)>.3)player.a=Math.atan2(player.vy,player.vx);
-  player.alt-=(player.chute?.0011:.0026)*dt;
+  player.alt-=(player.chute?.0011:save.items.wingsuit?.0015:.0026)*dt;
   if(!player.chute&&player.alt<.3)openChute();
   if(player.alt<=0){
     player.alt=0;player.chute=false;
@@ -1771,8 +1885,8 @@ function update(dt){
       if(!blockedFoot(player.x+vx,player.y))player.x+=vx;if(!blockedFoot(player.x,player.y+vy))player.y+=vy;player.walk+=dt*.3*(sp/2.8);}
   }else if(player.mode==='car'){
     if(nitroT>0){nitroT-=dt;const c=player.veh,ca=Math.cos(c.a),sa=Math.sin(c.a);for(let k=0;k<2;k++)parts.push({x:c.x-ca*26+(rnd()-.5)*6,y:c.y-sa*26+(rnd()-.5)*6,vx:-ca*3+(rnd()-.5),vy:-sa*3+(rnd()-.5),life:16,max:16,r:5,grow:-.2,c:pick(['80,200,255','255,160,40','255,255,255']),a:.9});}
-    else if(nitroCharge<1)nitroCharge=Math.min(1,nitroCharge+dt/480);
-    if((K('KeyN')||joy.nitro)&&save.items.nitro&&player.veh.owned&&nitroCharge>=1&&!locked){nitroT=110;nitroCharge=0;SND.whoosh();}
+    else if(nitroCharge<1)nitroCharge=Math.min(1,nitroCharge+dt/(save.items.nitro2?240:480));
+    if((K('KeyN')||joy.nitro)&&save.items.nitro&&player.veh.owned&&nitroCharge>=1&&!locked){nitroT=save.items.nitro2?170:110;nitroCharge=0;SND.whoosh();}
     drivePlayerCar(player.veh,inp,dt);player.x=player.veh.x;player.y=player.veh.y;}
   else if(player.mode==='plane'){flyPlane(player.veh,inp,dt);player.x=player.veh.x;player.y=player.veh.y;}
   else if(player.mode==='sky'){updateSky(inp,dt);}
@@ -1794,10 +1908,10 @@ function update(dt){
   if(stars>0){
     for(const c of cars)if(c.police&&c.ai&&!c.chase&&hyp(c.x-player.x,c.y-player.y)<1300){c.ai=false;c.chase=true;c.navI=null;}
     const chasers=cars.filter(c=>c.chase&&!c.leaving);
-    const want=[0,1,3,4,5,6][stars];
+    const want=Math.ceil([0,1,3,4,5,6][stars]*(save.items.scanner2?.5:1));
     spawnCD-=dt;if(chasers.length<want&&spawnCD<=0){spawnChaser();spawnCD=100;}
     const near=chasers.some(c=>hyp(c.x-player.x,c.y-player.y)<800);
-    if(near)calm=0;else{calm+=dt;if(calm>(save.items.scanner?360:600)){stars--;calm=0;if(!stars)toast('המשטרה הפסיקה לחפש אתכם',null,1600);}}
+    if(near)calm=0;else{calm+=dt;if(calm>(save.items.scanner2?200:save.items.scanner?360:600)){stars--;calm=0;if(!stars)toast('המשטרה הפסיקה לחפש אתכם',null,1600);}}
   }else{for(const c of cars)if(c.chase){c.chase=false;c.leaving=true;}}
   if(bustLock<=0&&stars>0){
     let caught=false;const slow=player.mode==='foot'||(player.mode==='car'&&Math.abs(player.veh.spd)<1.3)||(player.mode==='plane'&&player.veh.alt===0&&Math.abs(player.veh.spd)<1.3);
@@ -1822,7 +1936,7 @@ function update(dt){
   const v=player.veh,lx=v?v.vx*16:0,ly=v?v.vy*16:0;
   cam.x+=(player.x+lx-cam.x)*.09*dt;cam.y+=(player.y+ly-cam.y)*.09*dt;
   if(toastT>0){toastT-=dt;if(toastT<=0)$('toast').style.opacity=0;}
-  zoneT+=dt;if(zoneT>30){zoneT=0;const z=placeName(player.x,player.y);if(z!==lastZone){lastZone=z;$('zone').textContent=z;}const rg=regionOf(player.x);if(rg!==lastRegion){lastRegion=rg;if(rg==='cy')toast('ברוכים הבאים לקפריסין!','ערים לבנות, עצי זית וחופים',2400);else if(rg==='us')toast('ברוכים הבאים לאמריקה!','גורדי שחקים, מוניות צהובות ומדבר',2400);else toast('חזרתם הביתה','ברוכים השבים לעיר וים',2000);}}
+  zoneT+=dt;if(zoneT>30){zoneT=0;const z=placeName(player.x,player.y);if(z!==lastZone){lastZone=z;$('zone').textContent=z;}const rg=regionOf(player.x);if(rg!==lastRegion){lastRegion=rg;if(rg==='cy')toast('ברוכים הבאים לקפריסין!','ערים לבנות, עצי זית וחופים',2400);else if(rg==='us')toast('ברוכים הבאים לאמריקה!','גורדי שחקים, מוניות צהובות ומדבר',2400);else if(rg==='cn')toast('ברוכים הבאים לסין!','שנגחאי, פגודות, שוק הלילה והחומה הגדולה',2400);else toast('חזרתם הביתה','ברוכים השבים לעיר וים',2000);}}
 }
 function respawn(){
   if(player.veh){player.veh.spd=0;player.veh.vx=player.veh.vy=0;}
@@ -1934,6 +2048,14 @@ function drawBuilding(b,lit){
       ctx.fillStyle='rgba(0,0,0,.18)';if(b.w>=b.h)ctx.fillRect(rx,ry+b.h/2,b.w,b.h/2);else ctx.fillRect(rx+b.w/2,ry,b.w/2,b.h);
       ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=2;ctx.beginPath();if(b.w>=b.h){ctx.moveTo(rx+b.h*.4,ry+b.h/2);ctx.lineTo(rx+b.w-b.h*.4,ry+b.h/2);}else{ctx.moveTo(rx+b.w/2,ry+b.w*.4);ctx.lineTo(rx+b.w/2,ry+b.h-b.w*.4);}ctx.stroke();
       ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=1.5;ctx.strokeRect(rx,ry,b.w,b.h);
+    }else if(b.kind==='pagoda'){
+      const o=Math.min(b.w,b.h)*.12,cx=rx+b.w/2,cy=ry+b.h/2;
+      ctx.fillStyle=b.roof;ctx.fillRect(rx-o*.5,ry-o*.5,b.w+o,b.h+o);
+      ctx.fillStyle=shade(b.roof,.2);ctx.fillRect(rx+o,ry+o,b.w-2*o,b.h-2*o);
+      ctx.fillStyle=b.roof;ctx.fillRect(rx+o*2,ry+o*2,b.w-4*o,b.h-4*o);
+      ctx.strokeStyle='#e9c46a';ctx.lineWidth=2.5;ctx.strokeRect(rx-o*.5,ry-o*.5,b.w+o,b.h+o);ctx.strokeRect(rx+o,ry+o,b.w-2*o,b.h-2*o);
+      ctx.fillStyle='#e9c46a';for(const[px,py,sx,sy]of[[rx-o*.5,ry-o*.5,-1,-1],[rx+b.w+o*.5,ry-o*.5,1,-1],[rx-o*.5,ry+b.h+o*.5,-1,1],[rx+b.w+o*.5,ry+b.h+o*.5,1,1]]){ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px+sx*10,py);ctx.lineTo(px,py+sy*10);ctx.closePath();ctx.fill();}
+      ctx.beginPath();ctx.arc(cx,cy,5,0,TAU);ctx.fill();
     }else if(b.kind==='statue'){
       ctx.fillStyle=b.c;ctx.fillRect(rx,ry,b.w,b.h);ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=2;ctx.strokeRect(rx+6,ry+6,b.w-12,b.h-12);
       const cx=rx+b.w/2,cy=ry+b.h/2;ctx.fillStyle=b.roof;ctx.beginPath();ctx.arc(cx,cy,24,0,TAU);ctx.fill();
@@ -1994,12 +2116,14 @@ function drawCar(c){
   ctx.fillStyle='rgba(0,0,0,.3)';rr(-hl+4,-hw+5,L,Wd,8);ctx.fill();
   ctx.fillStyle='#15171b';const wx=hl*.6;for(const sx of[-wx-1,wx-9])for(const sy of[-hw-2.5,hw-1.5])ctx.fillRect(sx,sy,10,4);
   const g=ctx.createLinearGradient(0,-hw,0,hw);g.addColorStop(0,c.c1);g.addColorStop(.45,c.c2);g.addColorStop(1,c.c3);
-  ctx.fillStyle=g;rr(-hl,-hw,L,Wd,c.type==='van'?4:c.type==='sports'||c.type==='race'?10:7);ctx.fill();
+  ctx.fillStyle=g;rr(-hl,-hw,L,Wd,c.type==='van'||c.type==='monster'?4:c.type==='sports'||c.type==='race'||c.type==='super'?10:7);ctx.fill();
   ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=1.2;ctx.stroke();
   if(c.type==='police'){ctx.fillStyle='#1d3557';ctx.fillRect(-hl*.42,-hw,hl*.84,Wd);}
-  if(c.type==='sports'||c.type==='race'){ctx.fillStyle='rgba(255,255,255,.85)';ctx.fillRect(-hl,-3.5,L,2.5);ctx.fillRect(-hl,1,L,2.5);ctx.fillStyle=c.c3;ctx.fillRect(-hl-3,-hw+1,4,Wd-2);}
+  if(c.type==='sports'||c.type==='race'||c.type==='super'){ctx.fillStyle='rgba(255,255,255,.85)';ctx.fillRect(-hl,-3.5,L,2.5);ctx.fillRect(-hl,1,L,2.5);ctx.fillStyle=c.c3;ctx.fillRect(-hl-3,-hw+1,4,Wd-2);}
   const glass=(x,w)=>{const gg=ctx.createLinearGradient(x,0,x+w,0);gg.addColorStop(0,'#5b87a6');gg.addColorStop(1,'#b9e3fb');ctx.fillStyle=gg;rr(x,-hw+3,w,Wd-6,3);ctx.fill();};
-  if(c.type==='van'){ctx.fillStyle=shade(c.color,.35);rr(-hl+3,-hw+2,L*.62,Wd-4,3);ctx.fill();glass(hl*.3,hl*.32);}
+  if(c.type==='monster'){ctx.fillStyle='#111';for(const sx of[-hl*.6,hl*.35])for(const sy of[-hw-5,hw-3])ctx.fillRect(sx,sy,14,8);}
+  if(c.type==='electric'){ctx.fillStyle='#3ddc84';ctx.beginPath();ctx.moveTo(-hl*.05+3,-6);ctx.lineTo(-hl*.05-3,1);ctx.lineTo(-hl*.05+1,1);ctx.lineTo(-hl*.05-2,7);ctx.lineTo(-hl*.05+5,-1);ctx.lineTo(-hl*.05+1,-1);ctx.closePath();ctx.fill();}
+  if(c.type==='van'||c.type==='monster'){ctx.fillStyle=shade(c.color,.35);rr(-hl+3,-hw+2,L*.62,Wd-4,3);ctx.fill();glass(hl*.3,hl*.32);}
   else{glass(hl*.2,hl*.32);ctx.fillStyle=c.type==='police'?'#f4f6f8':c.c1;rr(-hl*.32,-hw+3,hl*.54,Wd-6,3);ctx.fill();glass(-hl*.58,hl*.22);}
   if(c.type==='taxi'){ctx.fillStyle='#222';ctx.fillRect(-5,-6,10,12);ctx.fillStyle='#ffd60a';ctx.fillRect(-3.5,-4.5,7,9);}
   if(c.type==='police'){const f=(time/7|0)%2,on=c.chase&&!c.leaving;ctx.fillStyle=on?(f?'#ff2d2d':'#2d5bff'):'#7a1f1f';ctx.fillRect(-4,-hw+3,6,(Wd-6)/2);ctx.fillStyle=on?(f?'#2d5bff':'#ff2d2d'):'#1f2f7a';ctx.fillRect(-4,0,6,(Wd-6)/2);}
@@ -2168,7 +2292,7 @@ function drawRadar(){
 }
 const mapc=$('mapc'),mctx2=mapc.getContext('2d');mapc.width=smap.width;mapc.height=smap.height;
 function drawBigMap(){
-  const x=player.x,r0=x<12500?0:x<30000?12500:30000,r1=x<12500?12500:x<30000?26000:W;
+  const x=player.x,r0=x<12500?0:x<30000?12500:x<61500?30000:61500,r1=x<12500?12500:x<30000?26000:x<61500?61500:W;
   const sw=Math.round((r1-r0)*MS),sh=smap.height,stripH=Math.round(sh*sw/smap.width);
   mapc.width=sw;mapc.height=sh+stripH+10;
   const g=mctx2;g.setTransform(1,0,0,1,0,0);g.fillStyle='#16202c';g.fillRect(0,0,mapc.width,mapc.height);
@@ -2181,7 +2305,7 @@ function drawBigMap(){
   const lbl=(t,x,y)=>{const[a,b]=P(x,y);g.lineWidth=4;g.strokeStyle='rgba(22,32,44,.7)';g.strokeText(t,a,b);g.fillStyle='#fff';g.fillText(t,a,b);};
   lbl('מרכז העיר',R(7)+260,R(7)-60);lbl('אזור התעשייה',R(2)+260,R(12)+260);lbl('גבעת הזיתים',R(3),R(1)+260);lbl('שכונת הפרחים',R(11),R(3)+260);lbl('שכונת האלונים',R(10)+260,R(12)+260);lbl('שדרות החוף',R(13)+260,R(10)+260);lbl('אי הדקלים',ISL.x,ISL.y-ISL.ry-60);lbl('הים הפתוח',10600,6000);lbl('המרינה',PIER.x+300,MY+260);lbl('שדה התעופה',3200,9700);
   lbl('קפריסין',19000,3150);lbl('ניקוסיה',19260,3550);lbl('לרנקה',20400,3730);lbl('לימסול',18100,4900);lbl('פאפוס',16180,4280);lbl('הרי טרודוס',17300,4250);lbl('הים התיכון',14000,2200);
-  lbl('האוקיינוס האטלנטי',34000,4300);lbl('ניו יורק',44300,1150);lbl('המדבר האמריקאי',53200,4000);lbl('אי הפסל',STAT.x,STAT.y-380);
+  lbl('האוקיינוס האטלנטי',34000,4300);lbl('האוקיינוס השקט',61500,4300);lbl('סין',72000,9300);lbl('שנגחאי',71000,1300);lbl('החומה הגדולה',72300,250);lbl('גן יו',69500,2950);lbl('ניו יורק',44300,1150);lbl('המדבר האמריקאי',53200,4000);lbl('אי הפסל',STAT.x,STAT.y-380);
   for(const a of AIRPORTS){const[ax,ay]=P(a.run.x+a.run.w/2,a.run.y+a.run.h/2);iconDot(g,ax,ay,8,'#ffffff',true);}
   for(const m of MARKERS){const[x,y]=P(m.x,m.y);iconDot(g,x,y,8,MCOL[m.type],true);}
   {const[x,y]=P(STATION.x,STATION.y);iconDot(g,x,y,8,'#3b6bff',true);}
