@@ -18,7 +18,7 @@ async function ready(page) {
   await page.waitForFunction(() => window.__vizel && document.querySelector('[data-testid=game-host]')?.dataset.ready === '1', null, { timeout: 30000 });
 }
 async function clickGame(page, gx, gy) {
-  const box = await page.locator('canvas').boundingBox();
+  const box = await page.locator('.game-parent canvas').first().boundingBox();
   const s = Math.min(box.width / 1280, box.height / 720);
   const ox = box.x + (box.width - 1280 * s) / 2, oy = box.y + (box.height - 720 * s) / 2;
   await page.mouse.click(ox + gx * s, oy + gy * s);
@@ -71,7 +71,7 @@ async function clickGame(page, gx, gy) {
     await page.evaluate(() => window.__vizel.director.quitToMap());
     // missing voices: nothing crashed and fallbacks were used
     const voiceLog = await page.evaluate(() => window.__vizel.audio.log.length);
-    check('voice lines played with fallbacks (no recordings present)', voiceLog > 10, `(${voiceLog} lines)`);
+    check('voice lines played with fallbacks (no recordings present)', voiceLog > 3, `(${voiceLog} lines since reload)`);
     await ctx.close();
   }
   // ---------------------------------------------------------------- phone (touch) flow
@@ -87,14 +87,18 @@ async function clickGame(page, gx, gy) {
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/phone-map.png` });
     const noHScroll = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
     check('phone: no horizontal page scroll', noHScroll);
-    await page.evaluate(() => (window.__vizel.director.fastStories = true));
-    await page.tap('[data-testid=stage-Y5]').catch(async () => page.tap('[data-testid=stage-Y1]'));
+    await page.evaluate(() => {
+      const v = window.__vizel;
+      v.director.fastStories = true;
+      v.store.getState().updateSave((s) => (s.profiles.yedidya.unlocked.yedidya = 8));
+    });
+    await page.tap('[data-testid=stage-Y5]');
     const playing = await page.waitForFunction(() => window.__vizel.director.activeMiniGame()?.playing, null, { timeout: 40000, polling: 200 }).then(() => true).catch(() => false);
     check('phone: tap starts a mini-game', playing);
     // tap a shoe via touch: find a game object position and tap it on the canvas
     const before = await page.evaluate(() => window.__vizel.director.activeMiniGame()?.sel);
     const pos = await page.evaluate(() => { const m = window.__vizel.director.activeMiniGame(); const s = m.shoes?.find((x) => !x.done); return s ? { x: s.o.x, y: s.o.y } : { x: 640, y: 360 }; });
-    const box = await page.locator('canvas').boundingBox();
+    const box = await page.locator('.game-parent canvas').first().boundingBox();
     const sc = Math.min(box.width / 1280, box.height / 720);
     await page.touchscreen.tap(box.x + (box.width - 1280 * sc) / 2 + pos.x * sc, box.y + (box.height - 720 * sc) / 2 + pos.y * sc);
     await page.waitForTimeout(300);

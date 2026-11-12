@@ -22,6 +22,7 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   async create(d: GameOverData) {
+    this.registry.set('gameOverReady', false);
     this.cameras.main.setBackgroundColor('#2b1d3a').fadeIn(250);
     drawBackground(this, 'livingRoom');
     Audio.music(null);
@@ -52,7 +53,8 @@ export class GameOverScene extends Phaser.Scene {
     await wait(this, 1800 * ff);
     b.destroy();
     // the kid pops out of the pile laughing
-    kid.setVisible(true).setExpr('laugh');
+    kid.setVisible(true).setExpr('laugh').setDepth(20);
+    kid.x = 170;
     kid.y = 560;
     Audio.sfx('boing');
     await tween(this, { targets: kid, y: 650, duration: 400 * ff, ease: 'Bounce.easeOut' });

@@ -115,7 +115,7 @@ class AudioManagerImpl {
     const line = getVoice(idOrSpeaker);
     const speaker = (line?.speaker ?? idOrSpeaker) as CastId | 'narrator';
     const body = text ?? line?.text ?? '';
-    const ms = Math.min(4200, Math.max(1200, body.length * 65));
+    const ms = Math.min(3400, Math.max(1100, body.length * 58));
     this.log.push(`${speaker}:${body}`);
     const s = this.settings;
     if (opts.subtitle !== false && (s?.subtitles ?? true) && body) this.subtitleSink(speaker, body, ms + 300);
