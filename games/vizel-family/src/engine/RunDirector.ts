@@ -227,6 +227,8 @@ export class RunDirector {
       if (on && sc.sys.isActive()) this.game.scene.pause(k);
       if (!on && sc.sys.isPaused()) this.game.scene.resume(k);
     }
+    if (on) Audio.pauseMusic();
+    else Audio.resumeMusic();
     this.store.setPaused(on);
   }
 

@@ -285,3 +285,10 @@ scripts/
 | App Store + Play Store | EAS Build (`eas build --platform all --profile production`) |
 | POS integration | Webhook API for purchase events from cashier systems |
 | AI analytics | Smart campaign recommendations based on member behavior |
+
+---
+
+## Other projects in this repo / פרויקטים נוספים בריפו
+
+- **`games/vizel-family/`** — *The Vizel Family: Total Chaos* — a standalone browser family game (React + Phaser 3 + Vite), not part of the Clubby workspaces. See its own `README.md`.
+- **`games/vizel-family/`** — *משפחת ויזל – הבלגן מתחיל!* — משחק משפחתי עצמאי בדפדפן (React + Phaser 3 + Vite), לא חלק מ-workspaces של Clubby. פרטים ב-`README.md` שבתיקייה.

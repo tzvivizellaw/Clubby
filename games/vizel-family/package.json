@@ -9,8 +9,10 @@
     "preview": "vite preview --host --port 4173",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "node tests/e2e/run-e2e.mjs",
-    "voices:scan": "node scripts/scan-voices.mjs"
+    "test:e2e": "node tests/e2e/run-e2e.mjs --url http://localhost:4173/",
+    "voices:scan": "node scripts/scan-voices.mjs",
+    "test:flows": "node tests/e2e/flows.mjs --url http://localhost:4173/",
+    "test:all": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "@fontsource/rubik": "5.3.0",

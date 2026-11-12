@@ -66,7 +66,21 @@ class AudioManagerImpl {
     }
   }
 
+  private lastTheme: string | null = null;
+  private pausedTheme: string | null = null;
+
+  pauseMusic() {
+    this.pausedTheme = this.lastTheme;
+    this.music(null);
+  }
+
+  resumeMusic() {
+    if (this.pausedTheme) this.music(this.pausedTheme);
+    this.pausedTheme = null;
+  }
+
   music(theme: string | null) {
+    this.lastTheme = theme;
     try {
       if (!theme) music.stop();
       else music.play(theme);

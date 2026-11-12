@@ -56,7 +56,7 @@ export default class A4_DanielsTest extends BaseMiniGame {
     this.mode = 'eq';
     const nb = this.add.image(640, 330, 'notebook').setScale(4.2, 2.3).setDepth(2);
     void nb;
-    this.eqText = this.add.text(660, 300, '', TXT(84, '#ffffff', 10)).setOrigin(0.5).setDepth(10);
+    this.eqText = this.add.text(660, 300, '', { ...TXT(84, '#ffffff', 10), rtl: false } as any).setOrigin(0.5).setDepth(10);
     this.pencil = new Living(this, 1050, 230, 'pencil', { scale: 1.5, eyeX: 0.1 }).setDepth(12);
     this.daniel = new CharacterRig(this, 170, 700, 'daniel', 0.7).setDepth(5);
     this.addHero(1150, 710, 0.55);

@@ -33,10 +33,10 @@ def('teddy', 86, 104, C(18, 18, 12, '#a0662b') + C(68, 18, 12, '#a0662b') + E(43
 def('banana', 96, 52, P('M6,10 Q20,46 60,44 Q86,42 92,22 Q70,34 48,30 Q22,26 14,6Z', '#ffe14d') + L('M6,10 L4,4', 5, '#6b4a1e'));
 def('toycar', 80, 50, P('M6,30 L14,14 L52,14 L64,28 L76,30 L76,40 L6,40Z', '#e74c3c') + R(20, 18, 14, 10, 2, '#bde0fe', st2) + R(38, 18, 12, 10, 2, '#bde0fe', st2) + C(22, 42, 8, '#2d3142') + C(60, 42, 8, '#2d3142'));
 def('dino', 84, 64, P('M10,50 Q14,24 40,24 L60,10 Q76,6 78,18 Q70,22 62,22 L58,38 L60,56 L50,56 L46,46 L28,46 L26,56 L16,56Z', '#5bc0be') + eye(68, 14, 3));
-def('block_r', 60, 60, R(4, 4, 52, 52, 6, '#ff595e') + `<text x="30" y="42" font-family="Arial Black" font-size="30" text-anchor="middle" fill="#fff">א</text>`);
-def('block_b', 60, 60, R(4, 4, 52, 52, 6, '#1982c4') + `<text x="30" y="42" font-family="Arial Black" font-size="30" text-anchor="middle" fill="#fff">ב</text>`);
-def('block_g', 60, 60, R(4, 4, 52, 52, 6, '#8ac926') + `<text x="30" y="42" font-family="Arial Black" font-size="30" text-anchor="middle" fill="#fff">ג</text>`);
-def('block_y', 60, 60, R(4, 4, 52, 52, 6, '#ffca3a') + `<text x="30" y="42" font-family="Arial Black" font-size="30" text-anchor="middle" fill="#fff">ד</text>`);
+def('block_r', 60, 60, R(4, 4, 52, 52, 6, '#ff595e') + R(14, 14, 32, 32, 4, '#ffffff55', st2) + C(30, 30, 7, '#ffffff', st2));
+def('block_b', 60, 60, R(4, 4, 52, 52, 6, '#1982c4') + R(14, 14, 32, 32, 4, '#ffffff55', st2) + C(30, 30, 7, '#ffffff', st2));
+def('block_g', 60, 60, R(4, 4, 52, 52, 6, '#8ac926') + R(14, 14, 32, 32, 4, '#ffffff55', st2) + C(30, 30, 7, '#ffffff', st2));
+def('block_y', 60, 60, R(4, 4, 52, 52, 6, '#ffca3a') + R(14, 14, 32, 32, 4, '#ffffff55', st2) + C(30, 30, 7, '#ffffff', st2));
 def('basketball', 66, 66, C(33, 33, 29, '#f39c12') + L('M4,33 L62,33 M33,4 L33,62') + L('M12,12 Q26,33 12,54 M54,12 Q40,33 54,54', 3));
 def('beachball', 66, 66, C(33, 33, 29, '#fff') + P('M33,4 Q14,33 33,62 Q20,33 33,4Z', '#ff595e', st2) + P('M33,4 Q52,33 33,62 Q46,33 33,4Z', '#1982c4', st2) + C(33, 33, 29, 'none'));
 def('foam', 34, 34, C(17, 17, 13, '#ff8a3d') + C(12, 12, 4, '#ffd0a8', 'stroke="none"'));

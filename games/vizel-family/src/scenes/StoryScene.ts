@@ -140,7 +140,8 @@ export class StoryScene extends Phaser.Scene {
           r.setExpr(s.expr ?? 'shout');
         }
         this.bubbleObj = bubble(this, x, y, s.text, { size: 30, tailX: 0 });
-        const ms = s.ms ?? Audio.say(s.voice ?? s.who, s.text);
+        // the speech bubble is the caption here, so no duplicate subtitle bar
+        const ms = s.ms ?? Audio.say(s.voice ?? s.who, s.text, { subtitle: false });
         let flap = false;
         const talk = r instanceof CharacterRig ? this.time.addEvent({ delay: 130, loop: true, callback: () => r.active && r.setExpr((flap = !flap) ? (s.expr ?? 'shout') : 'smile') }) : null;
         await this.sleep(ms);
