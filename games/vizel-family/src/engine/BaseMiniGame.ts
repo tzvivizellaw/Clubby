@@ -314,7 +314,7 @@ export abstract class BaseMiniGame extends Phaser.Scene {
     } catch {
       /* animation errors must never block flow */
     }
-    this.finish(true);
+    this.endRun(true);
   }
 
   async lose() {
@@ -339,10 +339,10 @@ export abstract class BaseMiniGame extends Phaser.Scene {
       this.scene.restart({ def: this.def, player: this.player, diff: { ...this.diff, goal: Math.max(0.3, this.diff.goal * 0.8), speed: this.diff.speed * 0.85 }, attempt: this.attempt + 1, bot: this.botOn, onEnd: this.onEnd });
       return;
     }
-    this.finish(false);
+    this.endRun(false);
   }
 
-  private finish(won: boolean) {
+  private endRun(won: boolean) {
     this.cameras.main.fadeOut(220);
     this.time.delayedCall(240, () => this.onEnd(won));
   }

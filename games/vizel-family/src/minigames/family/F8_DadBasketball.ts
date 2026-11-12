@@ -117,8 +117,8 @@ export default class F8_DadBasketball extends BaseMiniGame {
   simulate(angle: number, power: number): boolean {
     const v = this.velocity(angle, power);
     let x = BALL0.x, y = BALL0.y, vy = v.vy, t = this.elapsed;
-    const dt = 1 / 60;
-    for (let i = 0; i < 240; i++) {
+    const dt = 1 / 120;
+    for (let i = 0; i < 480; i++) {
       const py = y;
       vy += G * dt;
       x += v.vx * dt;
@@ -130,7 +130,18 @@ export default class F8_DadBasketball extends BaseMiniGame {
     return false;
   }
 
+  /** fixed sub-steps keep the ball physics identical at any frame rate (and match the bot's prediction) */
   tick(dt: number) {
+    const n = Math.max(1, Math.ceil(dt / (1 / 120)));
+    const h = dt / n;
+    const e0 = this.elapsed - dt;
+    for (let i = 0; i < n && this.playing; i++) {
+      this.elapsed = e0 + (i + 1) * h;
+      this.tickStep(h);
+    }
+  }
+
+  tickStep(dt: number) {
     this.hoop.x = this.hoopX();
     this.daniel.x = this.hoop.x + 150;
     const sp = (this.isToddler ? 0.6 : 1.2) * this.diff.speed;
