@@ -103,8 +103,8 @@ button { font-family: inherit; cursor: pointer; }
 .map-header { display: flex; align-items: center; gap: 10px; background: #fff; border: 4px solid var(--ink); border-radius: 20px; padding: 6px 12px; box-shadow: 0 5px 0 var(--ink); }
 .map-hello { flex: 1; font-weight: 900; font-size: 22px; }
 .icon-btn { background: var(--cream); border: 3px solid var(--ink); border-radius: 50%; width: 56px; height: 56px; font-size: 26px; padding: 0; overflow: hidden; display: grid; place-items: center; }
-.mini-avatar { width: 100%; height: 100%; }
-.mini-avatar svg { width: 140%; height: 140%; margin-top: 10px; }
+.mini-avatar { width: 100%; height: 100%; display: block; overflow: hidden; }
+.mini-avatar svg { width: 100%; height: 190%; display: block; margin-top: -12%; }
 .series-list { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
 .series { background: #ffffffcc; border: 4px solid var(--ink); border-radius: 24px; padding: 12px; box-shadow: 0 6px 0 var(--ink); }
 .series-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
