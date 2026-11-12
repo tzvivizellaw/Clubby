@@ -11,6 +11,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    alias: { phaser: new URL('./src/tests/phaserStub.ts', import.meta.url).pathname },
     include: ['src/tests/**/*.test.ts'],
   },
 } as any);

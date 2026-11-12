@@ -59,7 +59,7 @@ async function loseFlow(page, series, idx, player) {
   const hardFail = await page.evaluate(() => window.__vizel.store.getState().run.hardFail);
   if (!hardFail) {
     // toddler: game restarts itself, no heart lost
-    await page.waitForTimeout(3500);
+    await page.waitForTimeout(7000);
     const st = await page.evaluate(() => ({ hearts: window.__vizel.store.getState().run.hearts, attempt: window.__vizel.director.activeMiniGame()?.attempt }));
     return { softRetry: st.attempt === 1 && st.hearts === 3 };
   }
